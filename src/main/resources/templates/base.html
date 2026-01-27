@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title layout:title-pattern="$CONTENT_TITLE - My Test">My Test</title>
+    <link th:href="@{bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{bootstrap-icons.min.css}" rel="stylesheet">
+    <script th:src="@{bootstrap.bundle.min.js}"></script>
+    <script type="module">
+        import RefreshRuntime from 'http://localhost:5173/@react-refresh'
+        RefreshRuntime.injectIntoGlobalHook(window)
+        window.$RefreshReg$ = () => {}
+        window.$RefreshSig$ = () => (type) => type
+        window.__vite_plugin_react_preamble_installed__ = true
+    </script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column">
+<header>
+    <nav class="navbar navbar-dark bg-dark fs-2">
+        <a href="/" class="text-decoration-none text-white"><span class="navbar-nav mr-auto ms-3">My Test</span></a>
+        <a  class="text-decoration-none text-white" href="/auth"><i class="bi bi-person navbar-nav ml-auto me-3"></i></a>
+    </nav>
+</header>
+
+<main class="flex-grow-1">
+    <div layout:fragment="content">
+        Placeholder
+    </div>
+
+</main>
+
+<footer class="text-center text-secondary p-3">
+    © 2026 My Test
+</footer>
+
+<script layout:fragment="script"></script>
+
+</body>
+</html>

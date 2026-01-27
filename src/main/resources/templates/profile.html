@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{base.html}">
+<head>
+  <title>Profile</title>
+</head>
+<body>
+
+<div class="container mt-4" layout:fragment="content">
+  <h1>Profile</h1>
+  <div id="react-profile"></div>
+  <div id="react-plot"></div>
+  <article>
+    <span th:text="${des}"></span>
+  </article>
+  <script type="module" src="http://localhost:5173/src/main.jsx"></script>
+</div>
+
+</body>
+</html>
