@@ -4,6 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 import matplotlib.pyplot as plt
 import io
 import uvicorn
+from pydantic import BaseModel
+
+class ImageRequest(BaseModel):
+    user_id: int
+    user_name: str
+    user_email: str
+    cords: list[float]
 
 app = FastAPI()
 
@@ -22,10 +29,10 @@ app.add_middleware(
 )
 
 @app.post("/plot")
-async def plot(data: list[float]):
+async def plot(data: ImageRequest):
     print(data)
     fig, ax = plt.subplots()
-    ax.plot(data)
+    ax.plot(data.cords)
 
     buf = io.BytesIO()
     plt.savefig(buf, format="png")

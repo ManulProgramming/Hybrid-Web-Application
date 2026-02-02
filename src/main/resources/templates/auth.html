@@ -96,6 +96,11 @@
       loginHelpBlock.textContent = 'That user does not exist';
       loginHelpBlock.classList.remove('text-success');
       loginHelpBlock.classList.add('text-danger');
+    }else if (error==="expired"){
+      loginInput.classList.add('is-invalid');
+      passwordInput.classList.add('is-invalid');
+      loginHelpBlock.textContent = 'Your session has expired';
+      togglePasswordButton.classList.add('me-3');
     }
     togglePasswordButton.addEventListener('click', function () {
       const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';

@@ -5,6 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
@@ -41,6 +43,10 @@ class SecurityConfiguration {
                         .permitAll()
                 );
         return http.build();
+    }
+    @Bean
+    public WebClient webClient() {
+        return WebClient.builder().build();
     }
 }
 
@@ -103,9 +109,9 @@ class UserRepository {
     public Map<String, Object> getUserByNameorMail(String name) {
         return jdbcTemplate.queryForMap("SELECT * FROM users WHERE LOWER(nickname) = ? OR LOWER(email) = ?", name.toLowerCase(), name.toLowerCase());
     }
-    /*public Map<String, Object> getUserById(Object id) {
-        return jdbcTemplate.queryForMap("SELECT * FROM users WHERE id = ?", id);
-    }*/
+    public Map<String, Object> getUserById(Object id) {
+        return jdbcTemplate.queryForMap("SELECT * FROM users WHERE id = ?", Integer.parseInt((String) id));
+    }
     public void changeUserName(Object id, String newName) {
         jdbcTemplate.update("UPDATE users SET nickname = ? WHERE id = ?", newName, id);
     }
@@ -168,6 +174,33 @@ class UserService {
     public UserService(UserRepository repo) {
         this.repo = repo;
         repo.createTable();
+    }
+}
+
+@Service
+class ImageService {
+    private final WebClient webClient;
+    private final UserRepository repo;
+    public ImageService(WebClient webClient, UserRepository repo) {
+        this.webClient = webClient;
+        this.repo = repo;
+    }
+    public record ImageRequest(
+            Integer user_id,
+            String user_name,
+            String user_email,
+            double[] cords
+    ) {}
+    public byte[] fetchImage(Object id) {
+        Map<String, Object> user = repo.getUserById(id);
+        ImageRequest request = new ImageRequest((Integer) user.get("id"), (String) user.get("nickname"), (String) user.get("email"), new double[]{1.2, -6.5, 4.3, 5.6, -99.3});
+        return webClient.post()
+                .uri("http://localhost:8000/plot")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(byte[].class)
+                .block();
     }
 }
 
@@ -255,8 +288,19 @@ class APIController {
 @RequestMapping("/")
 class THController {
     private final UserRepository repo;
-    THController(UserRepository repo) {
+    private final ImageService imageService;
+    THController(UserRepository repo, ImageService imageService) {
         this.repo = repo;
+        this.imageService = imageService;
+    }
+    @GetMapping(value = "plot/{id}", produces = MediaType.IMAGE_PNG_VALUE)
+    @ResponseBody
+    public byte[] getImage(@PathVariable Object id) {
+        try {
+            return imageService.fetchImage(id);
+        } catch (Exception e) {
+            return new byte[0];
+        }
     }
     @GetMapping("")
     public String home(HttpSession session, HttpServletRequest request, HttpServletResponse response, Model model) {
@@ -280,9 +324,11 @@ class THController {
                 spec_cookie.setMaxAge(0);
                 spec_cookie.setPath("/");
                 response.addCookie(spec_cookie);
+                session.setAttribute("errorMsg","expired");
                 return "redirect:/auth";
             }
             model.addAttribute("email",user.get("email"));
+            model.addAttribute("imageId",user.get("id"));
         }else{
             model.addAttribute("email","Anonymous");
         }
