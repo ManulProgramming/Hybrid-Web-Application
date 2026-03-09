@@ -1,11 +1,13 @@
 HELP.md
-.env
 .gradle
-externalAPI/venv
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+.env
+.env.*
+externalAPI/venv
+uploads
 
 ### STS ###
 .apt_generated

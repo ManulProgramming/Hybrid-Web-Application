@@ -1,16 +1,14 @@
-from fastapi import FastAPI
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import matplotlib.pyplot as plt
-import io
+from fastapi.responses import StreamingResponse
+from PIL import Image, ImageOps
+import subprocess
+import tempfile
+import shutil
+import os
 import uvicorn
+import tempfile
 from pydantic import BaseModel
-
-class ImageRequest(BaseModel):
-    user_id: int
-    user_name: str
-    user_email: str
-    cords: list[float]
 
 app = FastAPI()
 
@@ -28,18 +26,77 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/plot")
-async def plot(data: ImageRequest):
-    print(data)
-    fig, ax = plt.subplots()
-    ax.plot(data.cords)
+class Item(BaseModel):
+    path: str
 
-    buf = io.BytesIO()
-    plt.savefig(buf, format="png")
-    plt.close(fig)
-    buf.seek(0)
 
-    return StreamingResponse(buf, media_type="image/png")
+def process_image(src, dst):
+    with Image.open(src) as img:
+        img = img.convert("RGB")
+        cropped_img = ImageOps.fit(img, (512,512), Image.Resampling.BICUBIC, centering=(0.5, 0.5))
+        cropped_img.save(dst, format="JPEG", quality=85)
+
+def process_video(src, dst):
+    cmd = [
+        "ffmpeg",
+        "-nostdin",
+        "-y",
+        "-i", src,
+        "-vf", "scale=1280:-1",
+        "-c:v", "libx264",
+        "-preset", "fast",
+        "-crf", "23",
+        '-f', 'mp4',
+        dst,
+    ]
+    subprocess.run(cmd, check=True)
+
+def process_thumbnail(src, dst):
+    cmd = [
+        "ffmpeg",
+        '-y',
+        '-i', src,
+        '-frames:v', '1',
+        '-vf', "thumbnail",
+        '-f', 'image2',
+        '-vcodec', 'mjpeg',
+        dst
+    ]
+    subprocess.run(cmd, check=True)
+
+@app.post("/process_image")
+async def processImage(item: Item):
+    input_path = item.path
+
+    output_tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".out")
+    output_path = output_tmp.name
+    output_tmp.close()
+
+    process_image(input_path, output_path)
+    return {"path": output_path}
+
+
+@app.post("/process_video")
+async def processVideo(item: Item):
+    input_path = item.path
+
+    output_tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".out")
+    output_path = output_tmp.name
+    output_tmp.close()
+
+    process_video(input_path, output_path)
+    return {"path": output_path}
+
+@app.post("/create_thumbnail")
+async def createThumbnail(item: Item):
+    input_path = item.path
+
+    output_tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".out")
+    output_path = output_tmp.name
+    output_tmp.close()
+
+    process_thumbnail(input_path, output_path)
+    return {"path": output_path}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)

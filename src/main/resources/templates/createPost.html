@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{base.html}">
+<head>
+    <title></title>
+    <style>
+        /* Thumbnail */
+
+        .video-thumbnail img {
+            width: 356px;
+            height: 200px;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+        .image-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .image-wrapper img {
+            object-fit: cover;
+            transition: opacity 0.3s ease;
+        }
+        .overlay {
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .overlay i {
+            color: white;
+            font-size: 2rem;
+        }
+
+        .custom-overlay {
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        .custom-overlay.success i {
+            color: #28a745;
+            font-size: 7rem;
+        }
+
+        .custom-overlay.danger i {
+            color: #dc3545;
+            font-size: 7rem;
+        }
+
+        .image-wrapper:hover .overlay {
+            opacity: 1;
+        }
+
+        .image-wrapper:hover .custom-overlay {
+            opacity: 0;
+        }
+
+        @media (min-width: 1700px) {
+            .container {
+                max-width: 1600px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div id="react-profile" class="card shadow-sm container mt-3">
+        <div class="card-body container">
+            <form method="POST" id="postForm" enctype="multipart/form-data">
+            <div class="row g-4 align-items-center">
+                <div class="col-12 col-md-4 text-center">
+                    <div class="video-thumbnail mt-2 mt-md-0">
+                        <input type="file" id="fileInput" name="file" style="display: none;" onchange="changeImg()" accept=".mp4">
+                        <div id="imgWrapper" class="image-wrapper" onclick="document.getElementById('fileInput').click();">
+                            <img id="avatarImage"
+                                 src="/video_placeholder.jpg">
+                            <div class="overlay">
+                                <i class="bi bi-upload"></i>
+                            </div>
+                        </div>
+                        <p id="filename" class="text-muted"></p>
+                    </div>
+                </div>
+                <div class="col-12 col-md-8 text-center">
+                    <div class="mb-3 text-start">
+                        <label class="form-label" for="title">Title:</label>
+                        <input class="form-control" id="title" type="text" name="title" maxlength="100"
+                               placeholder="Enter Title..." required/>
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label class="form-label" for="description">Description:</label>
+                        <textarea class="form-control" id="description" type="text" name="description" maxlength="2000" placeholder="Enter description..."></textarea>
+                    </div>
+                    <button class="btn btn-primary mt-2" type="button" onclick="sendForm(event)"><i class="bi bi-upload"></i> Create Video</button>
+                </div>
+            </div>
+        </form>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript" layout:fragment="script">
+    const error = /*[[${res.status}]]*/ 'None';
+    const titleInput = document.getElementById('title');
+    const videoInput = document.getElementById('fileInput');
+    const imgWrapper = document.getElementById('imgWrapper');
+    const avatarImage = document.getElementById('avatarImage');
+    const filename = document.getElementById('filename');
+    const postForm = document.getElementById("postForm");
+    document.addEventListener('DOMContentLoaded', function () {
+        if (error !== "200 OK") {
+            titleInput.classList.add('is-invalid');
+            filename.classList.remove('text-muted');
+            filename.classList.add('text-danger');
+            filename.innerText="Something is wrong with the file!";
+            avatarImage.classList.remove('border');
+            avatarImage.classList.remove('border-success');
+            avatarImage.classList.remove('border-2');
+            avatarImage.classList.add('border');
+            avatarImage.classList.add('border-danger');
+            avatarImage.classList.add('border-2');
+            if (!(document.getElementById('custom-overlay'))) {
+                const successOverlay = document.createElement('div');
+                successOverlay.id = "custom-overlay";
+                successOverlay.classList.add('custom-overlay');
+                successOverlay.classList.add('danger');
+                const successOverlayIcon = document.createElement('i');
+                successOverlayIcon.classList.add('bi');
+                successOverlayIcon.classList.add('bi-x');
+                successOverlay.appendChild(successOverlayIcon);
+                imgWrapper.appendChild(successOverlay);
+            }else{
+                const successOverlay = document.getElementById('custom-overlay');
+                successOverlay.classList.add('danger');
+                successOverlay.classList.remove('success');
+                successOverlay.children[0].classList.remove('bi-check');
+                successOverlay.children[0].classList.add('bi-x');
+            }
+        }
+    });
+    function changeImg() {
+        const file = videoInput.files[0];
+        if (file && file.type.startsWith('video/')) {
+            filename.classList.remove('text-danger');
+            filename.classList.add('text-muted');
+            filename.innerText=file.name;
+            avatarImage.classList.remove('border');
+            avatarImage.classList.remove('border-danger');
+            avatarImage.classList.remove('border-2');
+            avatarImage.classList.add('border');
+            avatarImage.classList.add('border-success');
+            avatarImage.classList.add('border-2');
+            if (!(document.getElementById('custom-overlay'))) {
+                const successOverlay = document.createElement('div');
+                successOverlay.id = "custom-overlay";
+                successOverlay.classList.add('custom-overlay');
+                successOverlay.classList.add('success');
+                const successOverlayIcon = document.createElement('i');
+                successOverlayIcon.classList.add('bi');
+                successOverlayIcon.classList.add('bi-check');
+                successOverlay.appendChild(successOverlayIcon);
+                imgWrapper.appendChild(successOverlay);
+            }else{
+                const successOverlay = document.getElementById('custom-overlay');
+                successOverlay.classList.add('success');
+                successOverlay.classList.remove('danger');
+                successOverlay.children[0].classList.remove('bi-x');
+                successOverlay.children[0].classList.add('bi-check');
+            }
+        }else{
+            filename.innerText="";
+            avatarImage.classList.remove('border');
+            avatarImage.classList.remove('border-success');
+            avatarImage.classList.remove('border-2');
+            avatarImage.classList.add('border');
+            avatarImage.classList.add('border-danger');
+            avatarImage.classList.add('border-2');
+            if (!(document.getElementById('custom-overlay'))) {
+                const successOverlay = document.createElement('div');
+                successOverlay.id = "custom-overlay";
+                successOverlay.classList.add('custom-overlay');
+                successOverlay.classList.add('danger');
+                const successOverlayIcon = document.createElement('i');
+                successOverlayIcon.classList.add('bi');
+                successOverlayIcon.classList.add('bi-x');
+                successOverlay.appendChild(successOverlayIcon);
+                imgWrapper.appendChild(successOverlay);
+            }else{
+                const successOverlay = document.getElementById('custom-overlay');
+                successOverlay.classList.add('danger');
+                successOverlay.classList.remove('success');
+                successOverlay.children[0].classList.remove('bi-check');
+                successOverlay.children[0].classList.add('bi-x');
+            }
+        }
+    }
+    function sendForm(event) {
+        event.preventDefault();
+        let should_we = true;
+        if (!(titleInput.value)) {
+            titleInput.classList.add('is-invalid');
+            should_we = false;
+        }
+        if (videoInput.files[0]){
+            if (should_we) {
+                postForm.submit();
+            }
+        } else {
+            filename.classList.remove('text-muted');
+            filename.classList.add('text-danger');
+            filename.innerText="Video file is required!";
+            avatarImage.classList.remove('border');
+            avatarImage.classList.remove('border-success');
+            avatarImage.classList.remove('border-2');
+            avatarImage.classList.add('border');
+            avatarImage.classList.add('border-danger');
+            avatarImage.classList.add('border-2');
+            if (!(document.getElementById('custom-overlay'))) {
+                const successOverlay = document.createElement('div');
+                successOverlay.id = "custom-overlay";
+                successOverlay.classList.add('custom-overlay');
+                successOverlay.classList.add('danger');
+                const successOverlayIcon = document.createElement('i');
+                successOverlayIcon.classList.add('bi');
+                successOverlayIcon.classList.add('bi-x');
+                successOverlay.appendChild(successOverlayIcon);
+                imgWrapper.appendChild(successOverlay);
+            }else{
+                const successOverlay = document.getElementById('custom-overlay');
+                successOverlay.classList.add('danger');
+                successOverlay.classList.remove('success');
+                successOverlay.children[0].classList.remove('bi-check');
+                successOverlay.children[0].classList.add('bi-x');
+            }
+        }
+    }
+    postForm.addEventListener('submit', event => {
+        event.preventDefault();
+        sendForm(event);
+    })
+</script>
+
+</body>
+</html>
