@@ -13,16 +13,12 @@
             transform: scale(1.02);
         }
 
-        /* Thumbnail */
-
         .video-thumbnail {
             width: 100%;
             aspect-ratio: 16/9;
             object-fit: cover;
             border-radius: 12px;
         }
-
-        /* Avatar */
 
         .channel-avatar img {
             width: 36px;
@@ -31,15 +27,11 @@
             object-fit: cover;
         }
 
-        /* Info section */
-
         .video-meta {
             margin-left: 10px;
             display: flex;
             flex-direction: column;
         }
-
-        /* Title */
 
         .video-title {
             font-weight: 600;
@@ -51,14 +43,10 @@
             overflow: hidden;
         }
 
-        /* Channel name */
-
         .channel-name {
             font-size: 0.85rem;
             margin-top: 4px;
         }
-
-        /* Date */
 
         .video-date {
             font-size: 0.8rem;
@@ -78,7 +66,7 @@
             transform: scale(1.05);
         }
 
-        #toggle-password {
+        .toggle-password {
             position: absolute;
             right: 1rem;
             top: 50%;
@@ -87,7 +75,7 @@
             z-index: 2;
             color: var(--bs-secondary-color);
         }
-        .profile-picture img {
+        #avatarImage {
             width: 200px;
             height: 200px;
             border-radius: 50%;
@@ -124,438 +112,67 @@
 
         @media (min-width: 1700px) {
             .container {
-                max-width: 1600px; /* Add even larger breakpoints if needed */
+                max-width: 1600px;
             }
         }
     </style>
 </head>
 <body>
 <div layout:fragment="content">
-    <div id="react-profile" class="card shadow-sm container mt-3" style="filter: blur(5px); pointer-events: none;">
-        <div class="card-body container">
+    <div id="react-profile" class="card shadow-sm container mt-3">
+        <div class="card-body container" style="pointer-events: none;">
             <div class="row g-4 align-items-center">
-                <div class="col-12 col-md-4 text-center">
-                    <div class="profile-picture mt-2 mt-md-0">
-                        <img id="avatarImage" src="/placeholder_ava.jpg">
+                <div class="col-12 col-md-4 text-center d-flex justify-content-center">
+                    <div class="mt-2 mt-md-0 bg-body-secondary rounded-circle" style="width:200px; height:200px; border-radius: 50%;">
+
                     </div>
                 </div>
                 <div class="col-12 col-md-8 text-center">
                     <div class="mb-3 text-start">
-                        <p>Username:</p>
-                        <p>Lorem_Ipsum</p>
+                        <div class="mt-0 mb-2 bg-body-secondary rounded" style="width:100%; height:36px">
+
+                        </div>
+                        <div class="mt-0 mb-2 bg-body-secondary rounded" style="width:100%; height:36px">
+
+                        </div>
                     </div>
                     <div class="mb-3 text-start">
-                        <p>Email:</p>
-                        <p>example@example.com</p>
+                        <div class="mt-0 mb-2 bg-body-secondary rounded" style="width:100%; height:36px">
+
+                        </div>
+                        <div class="mt-0 mb-2 bg-body-secondary rounded" style="width:100%; height:36px">
+
+                        </div>
                     </div>
                     <div class="mb-3 text-start">
-                        <p>Password:</p>
-                        <p>••••••••••••</p>
+                        <div class="mt-0 mb-2 bg-body-secondary rounded" style="width:100%; height:36px">
+
+                        </div>
+                        <div class="mt-0 bg-body-secondary rounded" style="width:100%; height:36px">
+
+                        </div>
                     </div>
-                    <button class="btn btn-danger mt-2" type="button" onclick="" disabled><i class="bi bi-trash"></i> Delete Account</button>
+                    <div class="row mx-3 justify-content-center gap-3 gap-md-5">
+                        <div class="col-12 col-md-3 bg-body-secondary rounded" style="height: 38px"></div>
+                        <div class="col-12 col-md-3 bg-body-secondary rounded" style="height: 38px"></div>
+                        <div class="col-12 col-md-3 bg-body-secondary rounded" style="height: 38px"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <!--<div id="react-profile" class="card shadow-sm container mt-3" style="filter: blur(5px);">
-        <div class="card-body container">
-            <div class="row g-4 align-items-center">
-                <div class="col-12 col-md-4 text-center">
-                    <div class="profile-picture mt-2 mt-md-0">
-                        <input type="file" id="fileInput" name="file" style="display: none;" onchange="console.log(this.value)" accept=".png, .jpg, .jpeg, .gif">
-                        <div class="image-wrapper" onclick="document.getElementById('fileInput').click();">
-                            <img id="avatarImage"
-                                 src="/media/u/8"
-                                 onerror="handleImageError(this)">
-                            <i class="bi bi-person-circle d-none" style="font-size: 200px"></i>
-                            <div class="overlay">
-                                <i class="bi bi-plus-lg"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-md-8 text-center">
-                    <div class="mb-3 text-start">
-                        <label class="form-label" for="username">Username:</label>
-                        <input class="form-control" id="username" type="text" name="username" maxlength="50"
-                               placeholder="Enter username..." required/>
-                        <div id="loginHelpBlock" class="form-text">
-
-                        </div>
-                    </div>
-                    <div class="mb-3 text-start">
-                        <label class="form-label" for="usermail">Email:</label>
-                        <input class="form-control" id="usermail" type="email" name="usermail" maxlength="89" placeholder="Enter email..." required/>
-                        <div id="emailHelpBlock" class="form-text">
-
-                        </div>
-                    </div>
-                    <div class="mb-3 text-start">
-                        <label class="form-label" for="userpass">Password:</label>
-                        <div class="position-relative">
-                            <input type="password" id="userpass" name="userpass" class="form-control" maxlength="150"
-                                   placeholder="Enter password..." required>
-                            <button type="button" class="bg-transparent border-0" id="toggle-password">
-                                <i class="bi bi-eye-slash" id="toggle-icon"></i>
-                            </button>
-                        </div>
-                        <div id="passwordHelpBlock" class="form-text">
-
-                        </div>
-                    </div>
-                    <button class="btn btn-danger mt-2" type="button" onclick=""><i class="bi bi-trash"></i> Delete Account</button>
-                </div>
+    <div id="react-profile-videos" class="container mt-4">
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border text-primary" role="status">
             </div>
-        </div>
-    </div>-->
-    <div th:if="${!#lists.isEmpty(res.content.content)}" class="container mt-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-
-            <!-- Left side: page info -->
-            <div class="text-muted small"
-                 th:text="|Showing ${1*res.content.page}-${res.content.size*res.content.page} of ${res.content.totalElements} total results|">
-            </div>
-
-            <!-- Right side: page size selector -->
-            <form id="sizeSortForm" method="GET" class="d-flex align-items-center gap-2">
-
-                <label for="size" class="text-muted small mb-0">
-                    Posts per page
-                </label>
-
-                <select name="s" id="size" class="form-select form-select-sm" style="width: 110px;"
-                        onchange="form.requestSubmit()">
-                    <option value="8" th:selected="${res.content.size == 8}">8</option>
-                    <option value="16" th:selected="${res.content.size == 16}">16</option>
-                    <option value="32" th:selected="${res.content.size == 32}">32</option>
-                    <option value="64" th:selected="${res.content.size == 64}">64</option>
-                    <option th:if="${res.content.size!=8 && res.content.size!=16 && res.content.size!=32 && res.content.size!=64}"
-                            th:value="${res.content.size}" th:text="${res.content.size}" selected>
-                    </option>
-                </select>
-
-                <div class="dropdown">
-                    <button class="btn" type="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-filter"></i>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><span style="padding: 0.25rem 1rem">Sort</span></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item" href="#" data-value="hot">Hot</a></li>
-                        <li><a class="dropdown-item" href="#" data-value="latest">Latest</a></li>
-                    </ul>
-                </div>
-            </form>
-
-        </div>
-        <div class="row g-4">
-            <div class="col-lg-3 col-md-4 col-sm-6"
-                 th:each="post : ${res.content.content}">
-                <article class="video-card">
-
-                    <!-- Thumbnail -->
-                    <a th:href="@{/p/{id}(id=${post.id})}" class="thumbnail-link text-body">
-                        <img class="video-thumbnail"
-                             th:src="@{/media/t/{id}(id=${post.id})}"
-                             onerror="this.src='/video_placeholder.jpg';">
-                    </a>
-
-                    <!-- Video info -->
-                    <div class="video-info d-flex mt-2">
-
-                        <!-- Avatar -->
-                        <a class="channel-avatar text-body"
-                           th:href="@{/u/{id}(id=${post.userId})}">
-                            <img th:src="@{/media/u/{id}(id=${post.userId})}"
-                                 onerror="handleImageError(this)"/>
-                            <i class="bi bi-person-circle d-none" style="font-size: 36px"></i>
-                        </a>
-
-                        <!-- Text content -->
-                        <div class="video-meta">
-
-                            <a th:href="@{/p/{id}(id=${post.id})}"
-                               class="video-title text-decoration-none text-body">
-                                <span th:text="${post.title}"></span>
-                            </a>
-
-                            <a th:href="@{/u/{id}(id=${post.userId})}"
-                               class="channel-name text-decoration-none text-muted">
-                                <span th:text="${post.username}"></span>
-                            </a>
-
-                            <div class="video-date text-muted">
-                                <span th:text="${#dates.format(new java.util.Date(post.createdAt),'dd-MM-yyyy HH:mm')}"></span>
-                            </div>
-
-                        </div>
-                    </div>
-
-                </article>
-            </div>
-        </div>
-
-        <form id="paginationForm" method="GET" class="mt-5">
-        <nav>
-            <ul th:if="${res.content.totalPages<=6}" class="pagination justify-content-center">
-                <li class="page-item">
-                    <a class="page-link page-prev-next" th:data-total-pages="${res.content.totalPages}" th:data-next-page="${res.content.page-1}" href="#" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-                <li th:each="i: ${#numbers.sequence(1, res.content.totalPages)}" class="page-item" th:classappend="${i == res.content.page} ? 'active'">
-                    <a class="page-link page-num" th:classappend="${i == res.content.page} ? 'active'" href="#" th:data-value="${i}" th:text="${i}"></a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link page-prev-next" th:data-total-pages="${res.content.totalPages}" th:data-next-page="${res.content.page+1}" href="#" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-            </ul>
-            <ul th:unless="${res.content.totalPages<=6}" class="pagination justify-content-center">
-                <li class="page-item">
-                    <a class="page-link page-prev-next" th:data-total-pages="${res.content.totalPages}" th:data-next-page="${res.content.page-1}" href="#" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-
-                <li class="page-item" th:if="${res.content.page-1>=3}">
-                    <a class="page-link page-num" href="#" th:data-value="1" th:text="1"></a>
-                </li>
-                <li class="page-item" th:if="${res.content.page-1>=3}">
-                    <a class="page-link page-num spacer" href="#">...</a>
-                </li>
-
-                <li th:each="i : ${#numbers.sequence(((res.content.page<4) ? 1 : (res.content.page-1>res.content.totalPages-4 ? res.content.totalPages-4 : res.content.page-1)), ((res.content.page>=res.content.totalPages-2) ? res.content.totalPages : (5>res.content.page+1 ? 5 : res.content.page+1)))}" class="page-item" th:classappend="${i == res.content.page} ? 'active'">
-                    <a class="page-link page-num" th:classappend="${i == res.content.page} ? 'active'" href="#" th:data-value="${i}" th:text="${i}"></a>
-                </li>
-
-                <li class="page-item" th:if="${res.content.totalPages-res.content.page>=3}">
-                    <a class="page-link page-num spacer" href="#">...</a>
-                </li>
-                <li class="page-item" th:if="${res.content.totalPages-res.content.page>=3}">
-                    <a class="page-link page-num" href="#" th:data-value="${res.content.totalPages}" th:text="${res.content.totalPages}"></a>
-                </li>
-
-                <li class="page-item">
-                    <a class="page-link page-prev-next" th:data-total-pages="${res.content.totalPages}" th:data-next-page="${res.content.page+1}" href="#" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-        </form>
-
-
-    </div>
-    <div th:unless="${!#lists.isEmpty(res.content.content)}" class="container mt-4">
-        <div class="text-center">
-            <p class="fs-2 fw-medium mt-4 text-muted">Content not found</p>
         </div>
     </div>
+    <script type="module" src="http://localhost:5173/src/profile.jsx"></script>
 </div>
 
-<script layout:fragment="script">
+<script th:inline="javascript" layout:fragment="script">
     const userId = /*[[${res.params.userId}]]*/ -1;
     const currentUserId = /*[[${res.currentUser!=null ? res.currentUser.id : 0}]]*/ 0;
-    const passwordInput = document.getElementById('userpass');
-    const loginInput = document.getElementById('username');
-    const emailInput = document.getElementById('usermail');
-    const togglePasswordButton = document.getElementById('toggle-password');
-    document.addEventListener('DOMContentLoaded', function () {
-        const passwordHelpBlock = document.getElementById('passwordHelpBlock');
-        const loginHelpBlock = document.getElementById('loginHelpBlock');
-        const emailHelpBlock = document.getElementById('emailHelpBlock');
-        const toggleIcon = document.getElementById('toggle-icon');
-        togglePasswordButton.addEventListener('click', function () {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            if (type === 'text') {
-                toggleIcon.classList.remove('bi-eye-slash');
-                toggleIcon.classList.add('bi-eye');
-            } else {
-                toggleIcon.classList.remove('bi-eye');
-                toggleIcon.classList.add('bi-eye-slash');
-            }
-        });
-        loginInput.addEventListener('input', function () {
-            const login = loginInput.value;
-            let feedbackMessage = '';
-            const isValid = /^[a-zA-Z0-9._-]{1,50}$/.test(login);
-            if (isValid) {
-                loginInput.classList.remove('is-invalid');
-                loginHelpBlock.textContent = '';
-                loginHelpBlock.classList.remove('text-danger');
-                loginHelpBlock.classList.add('text-success');
-            } else {
-                loginInput.classList.add('is-invalid');
-                loginHelpBlock.innerHTML = feedbackMessage.trim();
-                loginHelpBlock.classList.remove('text-success');
-                loginHelpBlock.classList.add('text-danger');
-            }
-
-            if (login === '') {
-                loginInput.classList.add('is-invalid');
-                loginHelpBlock.textContent = 'Login must only contain letters, digits, dash or underscore.';
-                loginHelpBlock.classList.remove('text-success', 'text-danger');
-            }
-        });
-        emailInput.addEventListener('input', function () {
-            const email = emailInput.value;
-            let isValid = true;
-            let feedbackMessage = ''
-            const check = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
-            if (!check) {
-                isValid = false;
-            }
-            if (isValid) {
-                emailInput.classList.remove('is-invalid');
-                emailHelpBlock.textContent = '';
-                emailHelpBlock.classList.remove('text-danger');
-                emailHelpBlock.classList.add('text-success');
-            } else {
-                emailInput.classList.add('is-invalid');
-                emailHelpBlock.innerHTML = feedbackMessage.trim();
-                emailHelpBlock.classList.remove('text-success');
-                emailHelpBlock.classList.add('text-danger');
-            }
-
-            if (email === '') {
-                emailInput.classList.add('is-invalid');
-                emailHelpBlock.textContent = 'Your email should be a valid email address.';
-                emailHelpBlock.classList.remove('text-success', 'text-danger');
-            }
-        })
-        passwordInput.addEventListener('input', function () {
-            const password = passwordInput.value;
-            let isValid = true;
-            let feedbackMessage = '';
-
-            const minLength = 8;
-            const hasNumber = /\d/.test(password);
-            const haslowercaseLetter = /[a-z]/.test(password);
-            const hasuppercaseLetter = /[A-Z]/.test(password);
-            const hasSpecial = /[@$!%*?&_-]/.test(password);
-            const hasInvalid = /[^a-zA-Z0-9@$!%*?&_\S-]/.test(password);
-
-            if (password.length < minLength) {
-                isValid = false;
-                feedbackMessage += `<i class="bi bi-x-circle-fill"></i> >${minLength} Characters<br>`;
-            }
-            if (!hasNumber) {
-                isValid = false;
-                feedbackMessage += `<i class="bi bi-x-circle-fill"></i> Numbers<br>`;
-            }
-            if (!haslowercaseLetter) {
-                isValid = false;
-                feedbackMessage += `<i class="bi bi-x-circle-fill"></i> Lowercase letters<br>`;
-            }
-            if (!hasuppercaseLetter) {
-                isValid = false;
-                feedbackMessage += `<i class="bi bi-x-circle-fill"></i> Uppercase letters<br>`;
-            }
-            if (!hasSpecial) {
-                isValid = false;
-                feedbackMessage += `<i class="bi bi-x-circle-fill"></i> Special characters<br>`;
-            }
-            if (hasInvalid) {
-                isValid = false;
-                feedbackMessage += `<i class="bi bi-x-circle-fill"></i> No invalid characters<br>`;
-            }
-            if (!(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/.test(password))) {
-                isValid = false;
-                feedbackMessage += `<i class="bi bi-x-circle-fill"></i> Invalid password<br>`;
-            }
-
-            if (isValid) {
-                passwordInput.classList.remove('is-invalid');
-                passwordInput.classList.add('is-valid');
-                togglePasswordButton.classList.add('me-3');
-                passwordHelpBlock.textContent = '';
-                passwordHelpBlock.classList.remove('text-danger');
-                passwordHelpBlock.classList.add('text-success');
-            } else {
-                passwordInput.classList.remove('is-valid');
-                passwordInput.classList.add('is-invalid');
-                togglePasswordButton.classList.add('me-3');
-                passwordHelpBlock.innerHTML = feedbackMessage.trim();
-                passwordHelpBlock.classList.remove('text-success');
-                passwordHelpBlock.classList.add('text-danger');
-            }
-
-            if (password === '') {
-                passwordInput.classList.remove('is-valid');
-                passwordInput.classList.add('is-invalid');
-                togglePasswordButton.classList.add('me-3');
-                passwordHelpBlock.innerHTML = '';
-                passwordHelpBlock.textContent = 'Your password must be more than 8 characters long, contain letters, numbers, special characters, and must not contain spaces, or emoji.';
-                passwordHelpBlock.classList.remove('text-success', 'text-danger');
-            }
-        });
-    });
-    document.querySelectorAll('.dropdown-item').forEach(item => {
-        item.addEventListener('click', function (e) {
-            e.preventDefault();
-
-            const value = this.getAttribute('data-value');
-            const form = document.getElementById('sizeSortForm');
-            if (!form.querySelector(`input[name="f"]`)) {
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = "f";
-                hiddenInput.value = value;
-                form.appendChild(hiddenInput);
-            } else {
-                form.querySelector(`input[name="f"]`).value = value;
-            }
-
-            form.requestSubmit();
-        });
-    });
-    document.querySelectorAll('.page-num').forEach(item => {
-        item.addEventListener('click', function (e) {
-            e.preventDefault();
-
-            if (!(e.target.classList.contains('active'))) {
-                const form = document.getElementById('paginationForm');
-                let value;
-                if (e.target.classList.contains('spacer')) {
-                    let newPage = prompt('Navigate to page');
-                    if (newPage) {
-                        value = newPage;
-                    }else{
-                        return;
-                    }
-                }else{
-                    value = this.getAttribute('data-value');
-                }
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = "p";
-                hiddenInput.value = value;
-                form.appendChild(hiddenInput);
-                form.requestSubmit();
-            }
-        })
-    })
-    document.querySelectorAll('.page-prev-next').forEach(item => {
-        item.addEventListener('click', function (e) {
-            e.preventDefault();
-            const totalPages = this.getAttribute('data-total-pages');
-            const nextPage = this.getAttribute('data-next-page');
-            const form = document.getElementById('paginationForm');
-            if (parseInt(nextPage) >= 1 && parseInt(nextPage) <= parseInt(totalPages)) {
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = "p";
-                hiddenInput.value = nextPage;
-                form.appendChild(hiddenInput);
-                form.requestSubmit();
-            }
-        })
-    });
 </script>
 
 </body>

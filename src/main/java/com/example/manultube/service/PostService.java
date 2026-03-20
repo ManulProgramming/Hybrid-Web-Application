@@ -3,8 +3,10 @@ package com.example.manultube.service;
 import com.example.manultube.dto.Post.PostRequestDTO;
 import com.example.manultube.dto.Post.PostResponseDTO;
 import com.example.manultube.dto.Post.PostUpdateDTO;
+import com.example.manultube.model.Comment;
 import com.example.manultube.model.Page;
 import com.example.manultube.model.Post;
+import com.example.manultube.model.Rating;
 import com.example.manultube.repository.PostRepository;
 import org.springframework.stereotype.Service;
 
@@ -92,5 +94,51 @@ public class PostService {
             }
         }
         postRepository.deletePostsForUserId(userId);
+    }
+    public Rating getRating(Long userId, Long postId) {
+        return postRepository.getRating(userId,postId);
+    }
+    public Rating changeRating(Rating rating) {
+        Rating currentRating = getRating(rating.getUserId(),rating.getPostId());
+        if (currentRating == null) {
+            currentRating = postRepository.createRating(rating);
+            if (rating.getRating()){
+                postRepository.changeUpvote(rating.getPostId(),1);
+            }else{
+                postRepository.changeDownvote(rating.getPostId(),1);
+            }
+        }else{
+            if (currentRating.getRating() == rating.getRating()) {
+                postRepository.deleteRating(rating.getUserId(),rating.getPostId());
+                if (rating.getRating()){
+                    postRepository.changeUpvote(rating.getPostId(),-1);
+                }else{
+                    postRepository.changeDownvote(rating.getPostId(),-1);
+                }
+                currentRating = null;
+            }else{
+                currentRating = postRepository.updateRating(rating);
+                if (rating.getRating()){
+                    postRepository.changeUpvote(rating.getPostId(),1);
+                    postRepository.changeDownvote(rating.getPostId(),-1);
+                }else{
+                    postRepository.changeDownvote(rating.getPostId(),1);
+                    postRepository.changeUpvote(rating.getPostId(),-1);
+                }
+            }
+        }
+        return currentRating;
+    }
+    public Comment createComment(Comment comment) {
+        return postRepository.insertComment(comment);
+    }
+    public Page<Comment> getComments(Long pageId, Integer page, Integer size) {
+        return postRepository.getComments(pageId, page, size);
+    }
+    public Comment getCommentById(Long commentId) {
+        return postRepository.getCommentById(commentId);
+    }
+    public void deleteComment(Long commentId) {
+        postRepository.deleteComment(commentId);
     }
 }

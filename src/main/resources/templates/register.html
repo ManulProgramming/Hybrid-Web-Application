@@ -263,7 +263,7 @@
         let should_we = false;
         if (loginInput.value && passwordInput.value && emailInput.value) {
             if (/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/.test(passwordInput.value)) {
-                if (/^([a-zA-Z0-9._-]{1,50}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/.test(loginInput.value)) {
+                if (/^[a-zA-Z0-9._-]{1,50}$/.test(loginInput.value)) {
                     if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(emailInput.value)) {
                         should_we = true;
                     }else{

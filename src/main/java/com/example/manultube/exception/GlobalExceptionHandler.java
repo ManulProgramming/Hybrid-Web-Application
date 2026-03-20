@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
                 ));
 
         APIError response = new APIError(
-                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST,
                 "Validation failed",
                 errors
         );
@@ -51,7 +51,7 @@ public class GlobalExceptionHandler {
                 ));
 
         APIError response = new APIError(
-                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST,
                 "Constraint violation",
                 errors
         );
@@ -62,7 +62,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleDataIntegrityViolation(
             DataIntegrityViolationException ex){
         APIError response = new APIError(
-                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST,
                 "Data integrity violation",
                 Map.of("error", "Data already exists")
         );
@@ -73,7 +73,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleEmptyResultDataAccess(
             EmptyResultDataAccessException ex){
         APIError response = new APIError(
-                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST,
                 "Empty result",
                 Map.of("error", "Data not found")
         );
@@ -84,7 +84,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleDataAccessResourceFailureException(
             DataAccessResourceFailureException ex){
         APIError response = new APIError(
-                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST,
                 "Data Access Resource Failure",
                 Map.of("error",ex.getMessage())
         );
@@ -95,7 +95,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleGeneralException(Exception ex) {
 
         APIError response = new APIError(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal server error",
                 Map.of("error", ex.getMessage())
         );

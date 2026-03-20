@@ -4,8 +4,6 @@
 <head>
     <title></title>
     <style>
-        /* Thumbnail */
-
         .video-thumbnail img {
             width: 356px;
             height: 200px;
@@ -72,6 +70,12 @@
                 max-width: 1600px;
             }
         }
+        @media (max-width: 576px){
+            .video-thumbnail img {
+                width: 238px;
+                height: 133px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -80,8 +84,8 @@
         <div class="card-body container">
             <form method="POST" id="postForm" enctype="multipart/form-data">
             <div class="row g-4 align-items-center">
-                <div class="col-12 col-md-4 text-center">
-                    <div class="video-thumbnail mt-2 mt-md-0">
+                <div class="col-12 col-lg-5 text-center">
+                    <div class="video-thumbnail mt-2 mt-lg-0">
                         <input type="file" id="fileInput" name="file" style="display: none;" onchange="changeImg()" accept=".mp4">
                         <div id="imgWrapper" class="image-wrapper" onclick="document.getElementById('fileInput').click();">
                             <img id="avatarImage"
@@ -93,7 +97,7 @@
                         <p id="filename" class="text-muted"></p>
                     </div>
                 </div>
-                <div class="col-12 col-md-8 text-center">
+                <div class="col-12 col-lg-7 text-center">
                     <div class="mb-3 text-start">
                         <label class="form-label" for="title">Title:</label>
                         <input class="form-control" id="title" type="text" name="title" maxlength="100"

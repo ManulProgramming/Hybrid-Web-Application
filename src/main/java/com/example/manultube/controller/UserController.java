@@ -98,15 +98,15 @@ public class UserController {
     }
 
     @PutMapping({"/{id}","/{id}/"})
-    public ResponseEntity<TypicalResponse<UserResponseDTO>> putUser(@PathVariable Long id, @Valid @ModelAttribute UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<TypicalResponse<UserResponseDTO>> putUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
         return updateUser(id, user, request, response);
     }
     @PatchMapping({"/{id}","/{id}/"})
-    public ResponseEntity<TypicalResponse<UserResponseDTO>> patchUser(@PathVariable Long id, @Valid @ModelAttribute UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<TypicalResponse<UserResponseDTO>> patchUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
         return updateUser(id, user, request, response);
     }
 
-    private ResponseEntity<TypicalResponse<UserResponseDTO>> updateUser(@PathVariable Long id, @ModelAttribute @Valid UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
+    private ResponseEntity<TypicalResponse<UserResponseDTO>> updateUser(@PathVariable Long id, @RequestBody @Valid UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
         TypicalResponse<UserResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
         String token = (String) cookieMap.get("token");
@@ -121,7 +121,18 @@ public class UserController {
                 userMap.put("name", userResponseDTO.getUsername());
                 res.setCurrentUser(userMap);
                 if (id.equals(userResponseDTO.getId()) && userService.doesPassMatch(user.getOldUserpass(),userResponseDTO.getId())) {
-                    userService.updateUser(id, user);
+                    if (Objects.equals(userResponseDTO.getUsername(),user.getUsername())) {
+                        user.setUsername(null);
+                    }
+                    if (Objects.equals(userResponseDTO.getUsermail(),user.getUsermail())) {
+                        user.setUsermail(null);
+                    }
+                    if (user.getUserpass()==null || Objects.equals(user.getUserpass(), "") || userService.doesPassMatch(user.getUserpass(),userResponseDTO.getId())) {
+                        user.setUserpass(null);
+                    }
+                    if (user.getUsername() != null || user.getUsermail() != null || user.getUserpass() != null) {
+                        userService.updateUser(id, user);
+                    }
                     res.setStatus(HttpStatus.OK);
                     res.setContent(userService.selectUserById(id));
                     return ResponseEntity.status(res.getStatus()).body(res);

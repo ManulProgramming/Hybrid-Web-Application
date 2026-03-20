@@ -9,8 +9,12 @@ import os
 import uvicorn
 import tempfile
 from pydantic import BaseModel
+import uuid
+import asyncio
 
 app = FastAPI()
+
+process_lock = asyncio.Lock()
 
 origins = [
     "http://localhost",
@@ -72,7 +76,8 @@ async def processImage(item: Item):
     output_path = output_tmp.name
     output_tmp.close()
 
-    process_image(input_path, output_path)
+    async with process_lock:
+        process_image(input_path, output_path)
     return {"path": output_path}
 
 
@@ -84,7 +89,8 @@ async def processVideo(item: Item):
     output_path = output_tmp.name
     output_tmp.close()
 
-    process_video(input_path, output_path)
+    async with process_lock:
+        process_video(input_path, output_path)
     return {"path": output_path}
 
 @app.post("/create_thumbnail")
@@ -95,7 +101,8 @@ async def createThumbnail(item: Item):
     output_path = output_tmp.name
     output_tmp.close()
 
-    process_thumbnail(input_path, output_path)
+    async with process_lock:
+        process_thumbnail(input_path, output_path)
     return {"path": output_path}
 
 if __name__ == "__main__":

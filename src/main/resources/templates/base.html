@@ -7,13 +7,13 @@
     <link th:href="@{/bootstrap.min.css}" rel="stylesheet">
     <link th:href="@{/bootstrap-icons.min.css}" rel="stylesheet">
     <script th:src="@{/bootstrap.bundle.min.js}"></script>
-    <!--<script type="module">
+    <script type="module">
         import RefreshRuntime from 'http://localhost:5173/@react-refresh'
         RefreshRuntime.injectIntoGlobalHook(window)
         window.$RefreshReg$ = () => {}
         window.$RefreshSig$ = () => (type) => type
         window.__vite_plugin_react_preamble_installed__ = true
-    </script>-->
+    </script>
     <style>
         html, body {
             font-family: 'Segoe UI', sans-serif;
@@ -39,11 +39,17 @@
             <a class="navbar-brand" href="/">
                 <img th:src="@{/ManulTube_logo.png}" id="logo" width="auto" height="70" class="d-inline-block align-top" alt="ManulTube">
             </a>
-            <div th:if="${res.currentUser}" class="d-flex d-lg-none align-items-center gap-3">
-                <a class="btn border-0 fs-4" href="/p">
+            <div th:if="${res.currentUser}" class="d-flex d-lg-none align-items-center gap-2">
+                <div class="react-theme">
+                    <button class="btn btn-sm">
+                        <i class="bi bi-moon" th:if="${res.params.theme=='light'}"></i>
+                        <i class="bi bi-sun" th:unless="${res.params.theme=='light'}"></i>
+                    </button>
+                </div>
+                <a class="btn btn-sm border-0 fs-4" href="/p">
                     <i class="bi bi-plus"></i>
                 </a>
-                <button class="navbar-toggler btn border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler btn btn-sm border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <i class="bi bi-search"></i>
                 </button>
                 <a class="text-decoration-none text-body d-flex align-items-center gap-3" th:href="@{/u/{id}(id=${res.currentUser.id})}">
@@ -51,11 +57,17 @@
                     <i class="bi bi-person-circle d-none fs-1"></i>
                 </a>
             </div>
-            <div th:unless="${res.currentUser}" class="d-flex d-lg-none align-items-center gap-3">
-                <a class="btn border-0 fs-4" href="/p">
+            <div th:unless="${res.currentUser}" class="d-flex d-lg-none align-items-center gap-2">
+                <div class="react-theme">
+                    <button class="btn btn-sm">
+                        <i class="bi bi-moon" th:if="${res.params.theme=='light'}"></i>
+                        <i class="bi bi-sun" th:unless="${res.params.theme=='light'}"></i>
+                    </button>
+                </div>
+                <a class="btn btn-sm border-0 fs-4" href="/p">
                     <i class="bi bi-plus"></i>
                 </a>
-                <button class="navbar-toggler btn border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler btn btn-sm border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <i class="bi bi-search"></i>
                 </button>
                 <a class="text-decoration-none text-body d-flex align-items-center gap-3" href="/login">
@@ -65,11 +77,17 @@
             <div class="collapse navbar-collapse flex-grow-0" id="navbarSupportedContent">
                 <form class="d-flex" role="search" action="/">
                     <input class="form-control mt-3 mt-lg-0 rounded-5" id="search" type="search" placeholder="Search..." name="q"/>
-                    <button class="btn d-none d-lg-block" type="submit"><i class="bi bi-search"></i></button>
+                    <button class="btn btn-sm d-none d-lg-block" type="submit"><i class="bi bi-search"></i></button>
                 </form>
             </div>
-            <div th:if="${res.currentUser}" class="d-none d-lg-flex align-items-center gap-3">
-                <a class="btn border-0 fs-4" href="/p">
+            <div th:if="${res.currentUser}" class="d-none d-lg-flex align-items-center gap-2">
+                <div class="react-theme">
+                    <button class="btn btn-sm">
+                        <i class="bi bi-moon" th:if="${res.params.theme=='light'}"></i>
+                        <i class="bi bi-sun" th:unless="${res.params.theme=='light'}"></i>
+                    </button>
+                </div>
+                <a class="btn btn-sm border-0 fs-4" href="/p">
                     <i class="bi bi-plus"></i>
                 </a>
                 <a class="text-decoration-none text-body d-flex align-items-center gap-3" th:href="@{/u/{id}(id=${res.currentUser.id})}">
@@ -78,8 +96,14 @@
                     <i class="bi bi-person-circle d-none fs-1"></i>
                 </a>
             </div>
-            <div th:unless="${res.currentUser}" class="d-none d-lg-flex align-items-center gap-3">
-                <a class="btn border-0 fs-4" href="/p">
+            <div th:unless="${res.currentUser}" class="d-none d-lg-flex align-items-center gap-2">
+                <div class="react-theme">
+                    <button class="btn btn-sm">
+                        <i class="bi bi-moon" th:if="${res.params.theme=='light'}"></i>
+                        <i class="bi bi-sun" th:unless="${res.params.theme=='light'}"></i>
+                    </button>
+                </div>
+                <a class="btn btn-sm border-0 fs-4" href="/p">
                     <i class="bi bi-plus"></i>
                 </a>
                 <a class="text-decoration-none text-body d-flex align-items-center gap-3" href="/login">
@@ -101,6 +125,7 @@
 <footer class="text-center text-secondary p-3">
     © 2026 ManulTube
 </footer>
+<script type="module" src="http://localhost:5173/src/theme.jsx"></script>
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const query = urlParams.get('q');
@@ -134,6 +159,7 @@
             iconElement.classList.remove('d-none');
         }
     }
+    window.handleImageError = handleImageError;
 </script>
 <script layout:fragment="script"></script>
 

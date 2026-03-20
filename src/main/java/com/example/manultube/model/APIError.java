@@ -1,20 +1,22 @@
 package com.example.manultube.model;
 
+import org.springframework.http.HttpStatus;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 
 public class APIError {
-    private int status;
+    private HttpStatus status;
     private String message;
     private LocalDateTime timestamp;
     private Map<String, String> errors;
-    public APIError(int status, String message, Map<String, String> errors) {
+    public APIError(HttpStatus status, String message, Map<String, String> errors) {
         this.status = status;
         this.message = message;
         this.timestamp = LocalDateTime.now();
         this.errors = errors;
     }
-    public int getStatus() {
+    public HttpStatus getStatus() {
         return status;
     }
     public String getMessage() {
@@ -27,7 +29,7 @@ public class APIError {
         return errors;
     }
 
-    public void setStatus(int status) {
+    public void setStatus(HttpStatus status) {
         this.status = status;
     }
     public void setMessage(String message) {

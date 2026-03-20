@@ -9,6 +9,7 @@ import com.example.manultube.dto.User.UserLoginDTO;
 import com.example.manultube.dto.User.UserRegisterDTO;
 import com.example.manultube.dto.User.UserResponseDTO;
 import com.example.manultube.model.Page;
+import com.example.manultube.model.Rating;
 import com.example.manultube.model.TypicalResponse;
 import com.example.manultube.service.CookieService;
 import com.example.manultube.service.PostService;
@@ -295,9 +296,6 @@ public class MainController {
                 response.addCookie(cookieService.deleteCookie(spec_cookie));
             }
         }
-        Page<PostResponseDTO> posts =  postService.getByUserId(id, page, size, sort);
-        res.setStatus(HttpStatus.OK);
-        res.setContent(posts);
         res.setParams(Map.of("theme", theme, "userId", id));
         model.addAttribute("res", res);
         return "profile.html";
@@ -388,5 +386,55 @@ public class MainController {
             redirectAttributes.addFlashAttribute("res", res);
             return "redirect:/p";
         }
+    }
+    @GetMapping({"/p/{id}","/p/{id}/"})
+    public String getPost(Model model, HttpServletRequest request, HttpServletResponse response, @PathVariable Long id){
+        TypicalResponse<Map<String, Object>> res = new TypicalResponse<>();
+        Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
+        String token = (String) cookieMap.get("token");
+        Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
+        String theme = (String) cookieMap.get("theme");
+        if (theme==null){
+            theme="dark";
+            response.addCookie(cookieService.createThemeCookie("dark"));
+        }
+        if (token != null) {
+            UserResponseDTO user = userService.selectUserByToken(token);
+            if (user != null) {
+                Map<String, Object> userMap = new HashMap<>();
+                userMap.put("id", user.getId());
+                userMap.put("name", user.getUsername());
+                res.setCurrentUser(userMap);
+            }else{
+                response.addCookie(cookieService.deleteCookie(spec_cookie));
+            }
+        }
+        PostResponseDTO post = postService.getById(id);
+        Map<String, Object> customMap = new HashMap<>();
+        customMap.put("id", post.getId());
+        customMap.put("userId", post.getUserId());
+        customMap.put("username", post.getUsername());
+        customMap.put("title", post.getTitle());
+        customMap.put("description", post.getDescription());
+        customMap.put("upvotes", post.getUpvotes());
+        customMap.put("downvotes", post.getDownvotes());
+        customMap.put("createdAt", post.getCreatedAt());
+        System.out.println(postService.getComments(id, 1, 16).getContent());
+        customMap.put("comments", postService.getComments(id, 1, 16));
+        if (res.getCurrentUser()!=null) {
+            Rating rating = postService.getRating((Long) res.getCurrentUser().get("id"),id);
+            if (rating!=null) {
+                customMap.put("rating", rating.getRating());
+            }else{
+                customMap.put("rating", null);
+            }
+        }else{
+            customMap.put("rating", null);
+        }
+        res.setStatus(HttpStatus.OK);
+        res.setParams(Map.of("theme", theme));
+        res.setContent(customMap);
+        model.addAttribute("res", res);
+        return "post.html";
     }
 }

@@ -5,7 +5,9 @@ import com.example.manultube.dto.Post.PostResponseDTO;
 import com.example.manultube.dto.Post.PostRequestDTO;
 import com.example.manultube.dto.Post.PostUpdateDTO;
 import com.example.manultube.dto.User.UserResponseDTO;
+import com.example.manultube.model.Comment;
 import com.example.manultube.model.Page;
+import com.example.manultube.model.Rating;
 import com.example.manultube.model.TypicalResponse;
 import com.example.manultube.service.CookieService;
 import com.example.manultube.service.PostService;
@@ -106,6 +108,134 @@ public class PostController {
         }
         return ResponseEntity.status(res.getStatus()).body(res);
     }
+    @GetMapping({"/{id}/r","/{id}/r/"})
+    public ResponseEntity<TypicalResponse<Rating>> getUserPostRating(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id){
+        TypicalResponse<Rating> res = new TypicalResponse<>();
+        Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
+        String token = (String) cookieMap.get("token");
+        Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
+        if (token != null) {
+            UserResponseDTO user = userService.selectUserByToken(token);
+            if (user != null) {
+                Map<String, Object> userMap = new HashMap<>();
+                userMap.put("id", user.getId());
+                userMap.put("name", user.getUsername());
+                res.setCurrentUser(userMap);
+                res.setStatus(HttpStatus.OK);
+                res.setContent(postService.getRating(user.getId(), id));
+                return ResponseEntity.status(res.getStatus()).body(res);
+            }else{
+                response.addCookie(cookieService.deleteCookie(spec_cookie));
+            }
+        }
+        res.setStatus(HttpStatus.UNAUTHORIZED);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+    @PostMapping({"/{id}/r","/{id}/r/"})
+    public ResponseEntity<TypicalResponse<Rating>> changeUserPostRating(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @RequestBody(required = true) Rating rating){
+        TypicalResponse<Rating> res = new TypicalResponse<>();
+        Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
+        String token = (String) cookieMap.get("token");
+        Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
+        if (token != null) {
+            UserResponseDTO user = userService.selectUserByToken(token);
+            if (user != null) {
+                Map<String, Object> userMap = new HashMap<>();
+                userMap.put("id", user.getId());
+                userMap.put("name", user.getUsername());
+                res.setCurrentUser(userMap);
+                rating.setUserId(user.getId());
+                rating.setPostId(id);
+                res.setContent(postService.changeRating(rating));
+                res.setStatus(HttpStatus.OK);
+                return ResponseEntity.status(res.getStatus()).body(res);
+            }else{
+                response.addCookie(cookieService.deleteCookie(spec_cookie));
+            }
+        }
+        res.setStatus(HttpStatus.UNAUTHORIZED);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+    @GetMapping({"/{id}/c","/{id}/c/"})
+    public ResponseEntity<TypicalResponse<Page<Comment>>> getComments(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @RequestParam(value="p", required = false, defaultValue = "1") Integer page, @RequestParam(value="s", required = false, defaultValue = "16") Integer size) {
+        TypicalResponse<Page<Comment>> res = new TypicalResponse<>();
+        Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
+        String token = (String) cookieMap.get("token");
+        Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
+        if (token != null) {
+            UserResponseDTO user = userService.selectUserByToken(token);
+            if (user != null) {
+                Map<String, Object> userMap = new HashMap<>();
+                userMap.put("id", user.getId());
+                userMap.put("name", user.getUsername());
+                res.setCurrentUser(userMap);
+            }else{
+                response.addCookie(cookieService.deleteCookie(spec_cookie));
+            }
+        }
+        Page<Comment> posts = postService.getComments(id, page, size);
+        res.setStatus(HttpStatus.OK);
+        res.setContent(posts);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+    @PostMapping({"/{id}/c","/{id}/c/"})
+    public ResponseEntity<TypicalResponse<Comment>> getComments(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @Valid @ModelAttribute Comment comment) {
+        TypicalResponse<Comment> res = new TypicalResponse<>();
+        Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
+        String token = (String) cookieMap.get("token");
+        Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
+        if (token != null) {
+            UserResponseDTO user = userService.selectUserByToken(token);
+            if (user != null) {
+                Map<String, Object> userMap = new HashMap<>();
+                userMap.put("id", user.getId());
+                userMap.put("name", user.getUsername());
+                res.setCurrentUser(userMap);
+                comment.setPostId(id);
+                comment.setUserId(user.getId());
+                comment.setUsername(user.getUsername());
+                Comment createdComment = postService.createComment(comment);
+                if (createdComment == null) {
+                    res.setStatus(HttpStatus.BAD_REQUEST);
+                    return ResponseEntity.status(res.getStatus()).body(res);
+                }
+                res.setStatus(HttpStatus.OK);
+                res.setContent(createdComment);
+                return ResponseEntity.status(res.getStatus()).body(res);
+            }else{
+                response.addCookie(cookieService.deleteCookie(spec_cookie));
+            }
+        }
+        res.setStatus(HttpStatus.UNAUTHORIZED);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+    @DeleteMapping({"/{postId}/c/{commentId}","/{postId}/c/{commentId}/"})
+    public ResponseEntity<TypicalResponse<Comment>> deleteComment(@PathVariable("postId") Long postId, @PathVariable("commentId") Long commentId, HttpServletRequest request, HttpServletResponse response) {
+        TypicalResponse<Comment> res = new TypicalResponse<>();
+        Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
+        String token = (String) cookieMap.get("token");
+        Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
+        if (token!=null){
+            UserResponseDTO user = userService.selectUserByToken(token);
+            if (user == null) {
+                response.addCookie(cookieService.deleteCookie(spec_cookie));
+            }else{
+                Map<String, Object> userMap = new HashMap<>();
+                userMap.put("id", user.getId());
+                userMap.put("name", user.getUsername());
+                res.setCurrentUser(userMap);
+                Comment comment = postService.getCommentById(commentId);
+                if (comment != null && comment.getPostId().equals(postId) && comment.getUserId().equals(user.getId())){
+                    postService.deleteComment(commentId);
+                    res.setStatus(HttpStatus.OK);
+                    return ResponseEntity.status(res.getStatus()).body(res);
+                }
+            }
+        }
+        res.setStatus(HttpStatus.UNAUTHORIZED);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
     @PostMapping({"/",""})
     public ResponseEntity<TypicalResponse<PostResponseDTO>> createPost(@Valid @ModelAttribute PostRequestDTO post, @RequestParam(value = "file", required = true) MultipartFile file, HttpServletRequest request, HttpServletResponse response) {
         TypicalResponse<PostResponseDTO> res = new TypicalResponse<>();
@@ -158,15 +288,15 @@ public class PostController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
     @PutMapping({"/{id}","/{id}/"})
-    public ResponseEntity<TypicalResponse<PostResponseDTO>> putPost(@PathVariable("id") Long id, @Valid @ModelAttribute PostUpdateDTO post, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<TypicalResponse<PostResponseDTO>> putPost(@PathVariable("id") Long id, @Valid @RequestBody PostUpdateDTO post, HttpServletRequest request, HttpServletResponse response) {
         return updatePost(id, post, request, response);
     }
     @PatchMapping({"/{id}","/{id}/"})
-    public ResponseEntity<TypicalResponse<PostResponseDTO>> patchPost(@PathVariable("id") Long id, @Valid @ModelAttribute PostUpdateDTO post, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<TypicalResponse<PostResponseDTO>> patchPost(@PathVariable("id") Long id, @Valid @RequestBody PostUpdateDTO post, HttpServletRequest request, HttpServletResponse response) {
         return updatePost(id, post, request, response);
     }
 
-    private ResponseEntity<TypicalResponse<PostResponseDTO>> updatePost(@PathVariable("id") Long id, @ModelAttribute @Valid PostUpdateDTO post, HttpServletRequest request, HttpServletResponse response) {
+    private ResponseEntity<TypicalResponse<PostResponseDTO>> updatePost(@PathVariable("id") Long id, @RequestBody @Valid PostUpdateDTO post, HttpServletRequest request, HttpServletResponse response) {
         TypicalResponse<PostResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
         String token = (String) cookieMap.get("token");
