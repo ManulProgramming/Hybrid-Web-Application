@@ -1,14 +1,14 @@
 package com.example.manultube.dto.Session;
 
 public class SessionResponseDTO {
-    private Long id;
+    private String id;
     private String token;
     private Long userId;
     private Long expiresIn;
-    public Long getId() {
+    public String getId() {
         return id;
     }
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
     public String getToken() {

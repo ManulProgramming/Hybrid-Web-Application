@@ -56,7 +56,7 @@
         const passwordHelpBlock = document.getElementById('passwordHelpBlock');
         const loginHelpBlock = document.getElementById('loginHelpBlock');
         const toggleIcon = document.getElementById('toggle-icon');
-        if (error !== "200 OK") {
+        if (!error || !error.includes("OK")) {
             loginInput.classList.add('is-invalid');
             passwordInput.classList.add('is-invalid');
             passwordHelpBlock.textContent = 'Invalid username or password!';

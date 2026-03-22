@@ -6,6 +6,7 @@ import com.example.manultube.dto.Session.SessionResponseDTO;
 import com.example.manultube.dto.User.UserLoginDTO;
 import com.example.manultube.dto.User.UserRegisterDTO;
 import com.example.manultube.dto.User.UserResponseDTO;
+import com.example.manultube.dto.User.UserUpdateDTO;
 import com.example.manultube.model.TypicalResponse;
 import com.example.manultube.service.CookieService;
 import com.example.manultube.service.SessionService;
@@ -90,28 +91,18 @@ public class APIController {
     }
 
     private ResponseEntity<TypicalResponse<UserResponseDTO>> createTokenAndRemovePrevious(TypicalResponse<UserResponseDTO> res, HttpServletResponse response, String token, Cookie spec_cookie, UserResponseDTO createdUser) {
+        if (token != null) {
+            SessionResponseDTO existingSession = sessionService.getSessionByToken(token);
+            if (existingSession != null) {
+                sessionService.deleteSession(existingSession.getId());
+                response.addCookie(cookieService.deleteCookie(spec_cookie));
+            }
+        }
         SessionRequestDTO sessionRequestDTO = new SessionRequestDTO();
         sessionRequestDTO.setUserId(createdUser.getId());
         SessionResponseDTO sessionResponseDTO = sessionService.insertSession(sessionRequestDTO);
         if (sessionResponseDTO != null) {
             response.addCookie(cookieService.createCookie(sessionResponseDTO));
-        }
-        if (token != null) {
-            try{
-                MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
-                StringBuilder hexString = new StringBuilder();
-                for (byte b : hash) {
-                    hexString.append(String.format("%02X", b));
-                }
-                String token1=hexString.toString();
-                SessionResponseDTO sessionResponseDTO1 = sessionService.getSessionByToken(token1);
-                if (sessionResponseDTO1 != null) {
-                    sessionService.deleteSession(sessionResponseDTO1.getId());
-                    response.addCookie(cookieService.deleteCookie(spec_cookie));
-                }
-            }catch (NoSuchAlgorithmException ignored){
-            }
         }
         return ResponseEntity.status(res.getStatus()).body(res);
     }
@@ -150,5 +141,22 @@ public class APIController {
             }
             return createTokenAndRemovePrevious(res, response, token, spec_cookie, createdUser);
         }
+    }
+
+    @PostMapping({"/logout","/logout/"})
+    public ResponseEntity<TypicalResponse<UserResponseDTO>> logoutUser(HttpServletRequest request, HttpServletResponse response){
+        TypicalResponse<UserResponseDTO> res = new TypicalResponse<>();
+        Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
+        String token = (String) cookieMap.get("token");
+        Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
+        if (token!=null){
+            SessionResponseDTO existingSession = sessionService.getSessionByToken(token);
+            if (existingSession != null) {
+                sessionService.deleteSession(existingSession.getId());
+                response.addCookie(cookieService.deleteCookie(spec_cookie));
+            }
+        }
+        res.setStatus(HttpStatus.OK);
+        return ResponseEntity.status(res.getStatus()).body(res);
     }
 }

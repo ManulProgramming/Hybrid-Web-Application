@@ -168,35 +168,25 @@ public class MainController {
         }
         res.setParams(Map.of("theme", theme));
         if (res.getStatus() == HttpStatus.OK) {
-            return "redirect:/";
+            return "redirect:/u/"+createdUser.getId();
         }else{
             redirectAttributes.addFlashAttribute("res", res);
             return "redirect:/login";
         }
     }
     private void createTokenAndRemovePrevious(HttpServletResponse response, String token, Cookie spec_cookie, UserResponseDTO createdUser) {
+        if (token != null) {
+            SessionResponseDTO existingSession = sessionService.getSessionByToken(token);
+            if (existingSession != null) {
+                sessionService.deleteSession(existingSession.getId());
+                response.addCookie(cookieService.deleteCookie(spec_cookie));
+            }
+        }
         SessionRequestDTO sessionRequestDTO = new SessionRequestDTO();
         sessionRequestDTO.setUserId(createdUser.getId());
         SessionResponseDTO sessionResponseDTO = sessionService.insertSession(sessionRequestDTO);
         if (sessionResponseDTO != null) {
             response.addCookie(cookieService.createCookie(sessionResponseDTO));
-        }
-        if (token != null) {
-            try{
-                MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
-                StringBuilder hexString = new StringBuilder();
-                for (byte b : hash) {
-                    hexString.append(String.format("%02X", b));
-                }
-                String token1=hexString.toString();
-                SessionResponseDTO sessionResponseDTO1 = sessionService.getSessionByToken(token1);
-                if (sessionResponseDTO1 != null) {
-                    sessionService.deleteSession(sessionResponseDTO1.getId());
-                    response.addCookie(cookieService.deleteCookie(spec_cookie));
-                }
-            }catch (NoSuchAlgorithmException ignored){
-            }
         }
     }
     @GetMapping({"/register","/register/"})
@@ -268,7 +258,7 @@ public class MainController {
         }
         res.setParams(Map.of("theme", theme));
         if (res.getStatus() == HttpStatus.OK) {
-            return "redirect:/";
+            return "redirect:/u/"+createdUser.getId();
         }else{
             redirectAttributes.addFlashAttribute("res", res);
             return "redirect:/register";

@@ -10,6 +10,7 @@ function Profile() {
         userpass: '',
         oldUserpass: ''
     });
+    const [avatarImg, setAvatarImg] = useState(`/media/u/${userId}`);
     const [errors, setErrors] = useState({});
     const [visibleOldUserpass, setVisibleOldUserpass] = useState(false);
     const [visibleUserpass, setVisibleUserpass] = useState(false);
@@ -149,6 +150,119 @@ function Profile() {
         }));
     };
 
+    async function logoutUser(){
+        try {
+            const response = await fetch(apiUrl + 'logout/', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            });
+            await response.json();
+            window.location.href = "/login";
+        } catch (error) {
+            console.error("Error updating user:", error);
+        }
+    }
+
+    async function deleteUser(){
+        let modalHeader = '404';
+        let modalBody = 'Unexpected error occurred.';
+        try {
+            const response = await fetch(apiUrl + 'u/' + userId, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData)
+            });
+            const data = await response.json();
+            modalHeader = data.status;
+            if (data.status.includes('401')){
+                modalBody = "Unauthorized! Current password is incorrect.";
+                setErrors({
+                    username: "",
+                    usermail: "",
+                    oldUserpass: ["Password is incorrect"],
+                    userpass: [],
+                })
+                setFormData({
+                    username: (data.content && data.content.username ? data.content.username : formData.username),
+                    usermail: (data.content && data.content.usermail ? data.content.usermail : formData.usermail),
+                    userpass: "",
+                    oldUserpass: ""
+                });
+                setVisibleOldUserpass(false);
+                setVisibleUserpass(false);
+                setModal({
+                    status: true,
+                    header: modalHeader,
+                    body: modalBody,
+                    onclick: (e) => {setModal(prev => ({...prev, ["status"]: false}))}
+                });
+            }else if (!data.status.includes('200')) {
+                modalBody = "Unexpected error occurred.";
+                setErrors({
+                    username: "",
+                    usermail: "",
+                    oldUserpass: ["Password is incorrect"],
+                    userpass: [],
+                })
+                setFormData({
+                    username: (data.content && data.content.username ? data.content.username : formData.username),
+                    usermail: (data.content && data.content.usermail ? data.content.usermail : formData.usermail),
+                    userpass: "",
+                    oldUserpass: ""
+                });
+                setVisibleOldUserpass(false);
+                setVisibleUserpass(false);
+                setModal({
+                    status: true,
+                    header: modalHeader,
+                    body: modalBody,
+                    onclick: (e) => {setModal(prev => ({...prev, ["status"]: false}))}
+                });
+            }else{
+                window.location.href = "/register";
+            }
+
+        }catch(error){
+            console.error("Error deleting user:", error);
+        }
+    }
+
+    const handleFileChange = async (event) => {
+        let modalHeader = 'Processing image';
+        let modalBody = <>
+            Profile picture is being processed.<br/>
+        </>;
+        const file = event.target.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+
+        const reader = new FileReader();
+        reader.onload = e => {
+            setAvatarImg(e.target.result);
+        }
+        reader.readAsDataURL(file);
+
+        const tempData = new FormData();
+        tempData.append("file", file);
+        setModal({
+            status: true,
+            header: modalHeader,
+            body: modalBody,
+            onclick: (e) => {setModal(prev => ({...prev, ["status"]: false}))}
+        });
+        try {
+            await fetch(apiUrl+'u/'+userId+'/a/', {
+                method: "PATCH",
+                body: tempData
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     async function updateUser() {
         let modalHeader = '404';
         let modalBody = 'Unexpected error occurred.';
@@ -161,12 +275,11 @@ function Profile() {
                 body: JSON.stringify(formData),
             });
             const data = await response.json();
-            console.log(data);
             modalHeader = data.status;
             if (data.content) {
                 modalBody = "Successfully updated!";
             }else if(data.status.includes('401')) {
-                modalBody = "Unauthorized! Old password is incorrect.";
+                modalBody = "Unauthorized! Current password is incorrect.";
                 setErrors({
                     username: "",
                     usermail: "",
@@ -209,9 +322,48 @@ function Profile() {
         });
     }
 
+    const handleLogout = () => {
+        let modalBodyText= <>
+            You are about to logout from your account.
+        </>;
+        setModal({
+            status: true,
+            header: "Are you sure?",
+            body: modalBodyText,
+            onclick: async () => {setModal(prev => ({...prev, ["status"]: false})); await logoutUser();}
+        });
+    }
+
+    const handleDelete = () => {
+        let should_we = false;
+        let modalBodyText= <>
+            <b className="text-danger">You are about to delete your account and all the posts!</b>
+        </>;
+        if (/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/.test(formData.oldUserpass)) {
+            should_we = true;
+        } else {
+            setErrors(prev => ({
+                ...prev,
+                ["oldUserpass"]: validate("oldUserpass", formData.oldUserpass)
+            }));
+        }
+        if (should_we){
+            setModal({
+                status: true,
+                header: "Are you sure?",
+                body: modalBodyText,
+                onclick: async () => {setModal(prev => ({...prev, ["status"]: false})); await deleteUser();}
+            });
+        }
+    }
+
     const handleSubmit = () => {
         let should_we = false;
-        let modalBodyText= 'Please recheck your info:';
+        let modalBodyText= <>
+            Please recheck your info:<br/>
+            <b>Username</b>: {formData.username}<br/>
+            <b>Email</b>: {formData.usermail}
+        </>;
 
         if (formData.userpass === "" || formData.userpass === null || /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/.test(formData.userpass)) {
             if (/^[a-zA-Z0-9._-]{1,50}$/.test(formData.username)) {
@@ -243,9 +395,13 @@ function Profile() {
             }));
         }
         if (should_we){
-            modalBodyText += '<br><b>Username</b>: '+formData.username+"<br><b>Email</b>: "+formData.usermail;
             if (formData.userpass !== "" && formData.userpass !== null && formData.userpass) {
-                modalBodyText += '<br><u>You are also attempting to change your password!</u>';
+                modalBodyText= <>
+                    Please recheck your info:<br/>
+                    <b>Username</b>: {formData.username}<br/>
+                    <b>Email</b>: {formData.usermail}<br/>
+                    <u>You are also attempting to change your password!</u>
+                </>
             }
             setModal({
                 status: true,
@@ -287,10 +443,10 @@ function Profile() {
                     <div className="col-12 col-md-4 text-center">
                         <div className="profile-picture mt-2 mt-md-0">
                             <input type="file" name="file" style={{'display': 'none'}} ref={fileInputRef}
-                                   onChange={(e) => console.log(e.target.value)} accept=".png, .jpg, .jpeg, .gif"/>
+                                   onChange={handleFileChange} accept=".png, .jpg, .jpeg"/>
                             <div className="image-wrapper" onClick={handleClick}>
-                                <img id="avatarImage" src={`/media/u/${userId}`}
-                                     className={isAvaBad ? "d-none" : ""}
+                                <img id="avatarImage" src={avatarImg}
+                                     className={`${isAvaBad ? "d-none" : ""}`}
                                      onError={() => setIsAvaBad(true)}/>
                                 <i className={`bi bi-person-circle ${isAvaBad ? "" : "d-none"}`}
                                    style={{'fontSize': '200px'}}></i>
@@ -326,7 +482,7 @@ function Profile() {
                             )}
                         </div>
                         <div className="mb-3 text-start">
-                            <label className="form-label" htmlFor="oldUserpass">Old Password:</label>
+                            <label className="form-label" htmlFor="oldUserpass">Current Password:</label>
                             <div className="position-relative">
                                 <input type={visibleOldUserpass ? "text" : "password"} name="oldUserpass"
                                        className={`form-control ${errors.oldUserpass && errors.oldUserpass.length !== 0 ? "is-invalid" : ""}`}
@@ -376,10 +532,11 @@ function Profile() {
                             <button className="col-12 col-md-3 btn btn-success" onClick={handleSubmit}><i
                                 className="bi bi-floppy"></i> Save
                             </button>
-                            <button className="col-12 col-md-3 btn btn-primary"><i
+                            <button className="col-12 col-md-3 btn btn-primary" onClick={handleLogout}><i
                                 className="bi bi-box-arrow-right"></i> Logout
                             </button>
-                            <button className="col-12 col-md-3 btn btn-danger"><i className="bi bi-trash3"></i> Delete
+                            <button className="col-12 col-md-3 btn btn-danger" onClick={handleDelete}><i
+                                className="bi bi-trash3"></i> Delete
                             </button>
                         </div>
                     </div>
@@ -393,7 +550,7 @@ function Profile() {
                     <div className="col-12 col-md-4 text-center">
                         <div className="profile-picture mt-2 mt-md-0">
                             <img id="avatarImage" src={`/media/u/${userId}`}
-                                 className={isAvaBad ? "d-none" : ""}
+                                 className={`my-5 ${isAvaBad ? "d-none" : ""}`}
                                  onError={() => setIsAvaBad(true)}/>
                             <i className={`bi bi-person-circle ${isAvaBad ? "" : "d-none"}`}
                                style={{'fontSize': '200px'}}></i>

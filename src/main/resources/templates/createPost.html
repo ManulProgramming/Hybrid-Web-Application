@@ -124,7 +124,7 @@
     const filename = document.getElementById('filename');
     const postForm = document.getElementById("postForm");
     document.addEventListener('DOMContentLoaded', function () {
-        if (error !== "200 OK") {
+        if (!error || !error.includes("OK")) {
             titleInput.classList.add('is-invalid');
             filename.classList.remove('text-muted');
             filename.classList.add('text-danger');

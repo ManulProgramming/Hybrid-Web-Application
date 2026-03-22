@@ -91,36 +91,54 @@ public class PostRepository {
         if (total==null){
             total=0L;
         }
-        if (size<1){
+        if (size!=null && size<1){
             size=16;
         }
-        if (size>100){
+        if (size!=null && size>100){
             size=100;
         }
-        if ((long) page *size>total){
+        if (size!=null && (long) page *size>total){
             page= (int) Math.ceil((double) total /size);
         }
         if (page<1){
             page=1;
         }
-        if (!Objects.equals(sort, "hot")){
-            sort="createdAt";
-        }else{
+        if (!Objects.equals(sort, "latest")){
             sort="hot_score";
+        }else{
+            sort="createdAt";
         }
-        sql = """
-        SELECT *,
-               LOG(GREATEST(ABS(upvotes - downvotes), 1)) +
-               SIGN(upvotes - downvotes) *
-               (
-                   (createdAt / 1000) - 1134028003
-                   ) / 45000.0
-                   AS hot_score
-        FROM posts WHERE userId = :userId ORDER BY\s""" +sort+ " DESC, id DESC LIMIT :size OFFSET :page ";
-        params
-                .addValue("page", (page-1)*size)
-                .addValue("size", size);
+        if (size!=null) {
+            sql = """
+            
+                    SELECT *,
+                   LOG(GREATEST(ABS(upvotes - downvotes), 1)) +
+                   SIGN(upvotes - downvotes) *
+                   (
+                       (createdAt / 1000) - 1134028003
+                       ) / 45000.0
+                       AS hot_score
+            FROM posts WHERE userId = :userId ORDER BY\s""" +sort+ " DESC, id DESC LIMIT :size OFFSET :page";
+            params
+                    .addValue("size", size )
+                    .addValue("page", (page-1)*size);
+        }else{
+            sql = """
+            
+                    SELECT *,
+                   LOG(GREATEST(ABS(upvotes - downvotes), 1)) +
+                   SIGN(upvotes - downvotes) *
+                   (
+                       (createdAt / 1000) - 1134028003
+                       ) / 45000.0
+                       AS hot_score
+            FROM posts WHERE userId = :userId
+            """;
+        }
         List<Post> posts = jdbcTemplate.query(sql, params, new BeanPropertyRowMapper<>(Post.class));
+        if (size==null){
+            size = Integer.MAX_VALUE;
+        }
         Page<Post> p = new Page<>();
         p.setContent(posts);
         p.setPage(page);
@@ -155,18 +173,33 @@ public class PostRepository {
         }else{
             sort="createdAt";
         }
-        sql = """
-        SELECT *,
-               LOG(GREATEST(ABS(upvotes - downvotes), 1)) +
-               SIGN(upvotes - downvotes) *
-               (
-                   (createdAt / 1000) - 1134028003
-                   ) / 45000.0
-                   AS hot_score
-        FROM posts WHERE username ILIKE :query OR title ILIKE :query OR description ILIKE :query ORDER BY\s""" + sort + " DESC, id DESC LIMIT :size OFFSET :page";
-        params
-                .addValue("size", (size!=null) ? size : "ALL" )
-                .addValue("page", (size!=null) ? (page-1)*size : 1);
+        if (size!=null) {
+            sql = """
+            
+                    SELECT *,
+                   LOG(GREATEST(ABS(upvotes - downvotes), 1)) +
+                   SIGN(upvotes - downvotes) *
+                   (
+                       (createdAt / 1000) - 1134028003
+                       ) / 45000.0
+                       AS hot_score
+            FROM posts WHERE username ILIKE :query OR title ILIKE :query OR description ILIKE :query ORDER BY\s""" + sort + " DESC, id DESC LIMIT :size OFFSET :page";
+            params
+                    .addValue( "size", size )
+                    .addValue( "page", (page-1)*size);
+        }else{
+            sql = """
+            
+                    SELECT *,
+                   LOG(GREATEST(ABS(upvotes - downvotes), 1)) +
+                   SIGN(upvotes - downvotes) *
+                   (
+                       (createdAt / 1000) - 1134028003
+                       ) / 45000.0
+                       AS hot_score
+            FROM posts WHERE username ILIKE :query OR title ILIKE :query OR description ILIKE :query
+            """;
+        }
         List<Post> posts = jdbcTemplate.query(sql, params, new BeanPropertyRowMapper<>(Post.class));
         if (size==null){
             size = Integer.MAX_VALUE;

@@ -7,6 +7,7 @@ import com.example.manultube.dto.User.UserResponseDTO;
 import com.example.manultube.dto.User.UserUpdateDTO;
 import com.example.manultube.model.User;
 import com.example.manultube.repository.UserRepository;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -48,10 +49,14 @@ public class UserService {
         return encoder.matches(rawPassword, userRepository.getUserById(userId).getUserpass());
     }
     public UserResponseDTO loginUser(UserLoginDTO userLoginDTO){
-        User selectedUser = selectUserByNameOrEmail(userLoginDTO.getUsername());
-        if (encoder.matches(userLoginDTO.getUserpass(), selectedUser.getUserpass())){
-            return toDto(selectedUser);
-        }else{
+        try {
+            User selectedUser = selectUserByNameOrEmail(userLoginDTO.getUsername());
+            if (encoder.matches(userLoginDTO.getUserpass(), selectedUser.getUserpass())){
+                return toDto(selectedUser);
+            }else{
+                return null;
+            }
+        }catch (EmptyResultDataAccessException e){
             return null;
         }
     }
@@ -62,30 +67,19 @@ public class UserService {
         return userRepository.getUserByNameOrEmail(name);
     }
     public UserResponseDTO selectUserByToken(String token){
-        try{
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                hexString.append(String.format("%02X", b));
+        SessionResponseDTO session = sessionService.getSessionByToken(token);
+        if (session != null) {
+            String sessionId = session.getId();
+            Long userId = session.getUserId();
+            Long expiresIn = session.getExpiresIn();
+            long currentTime = System.currentTimeMillis();
+            if (currentTime > expiresIn) {
+                sessionService.deleteSession(sessionId);
+                return null;
             }
-            token = hexString.toString();
-            SessionResponseDTO session = sessionService.getSessionByToken(token);
-            if (session != null) {
-                Long sessionId = session.getId();
-                Long userId = session.getUserId();
-                Long expiresIn = session.getExpiresIn();
-                long currentTime = System.currentTimeMillis();
-                if (currentTime > expiresIn) {
-                    sessionService.deleteSession(sessionId);
-                    return null;
-                }
-                return selectUserById(userId);
-            }
-            return null;
-        }catch (NoSuchAlgorithmException ex){
-            return null;
+            return selectUserById(userId);
         }
+        return null;
     }
     public void updateUser(Long id, UserUpdateDTO userUpdateDTO){
         User user = new User();

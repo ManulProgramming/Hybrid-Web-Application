@@ -13,14 +13,11 @@ import org.springframework.stereotype.Service;
 class AllServices {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
-    private final SessionRepository sessionRepository;
     public AllServices(UserRepository userRepository, PostRepository postRepository, SessionRepository sessionRepository) {
         this.userRepository = userRepository;
         userRepository.createTable();
         this.postRepository = postRepository;
         postRepository.createTable();
-        this.sessionRepository = sessionRepository;
-        sessionRepository.createTable();
     }
 }
 

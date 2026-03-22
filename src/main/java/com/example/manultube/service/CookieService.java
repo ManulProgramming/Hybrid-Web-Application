@@ -10,7 +10,7 @@ import java.util.Map;
 @Service
 public class CookieService {
     public Cookie createCookie(SessionResponseDTO session) {
-        Cookie cookie = new Cookie("JSessionToken", session.getToken());
+        Cookie cookie = new Cookie("JWT", session.getToken());
         cookie.setMaxAge(7*24*60*60);
         cookie.setSecure(true);
         cookie.setHttpOnly(true);
@@ -30,7 +30,7 @@ public class CookieService {
         String theme=null;
         if (cookies != null){
             for (Cookie cookie : cookies){
-                if (cookie.getName().equals("JSessionToken")){
+                if (cookie.getName().equals("JWT")){
                     token = cookie.getValue();
                     spec_cookie = cookie;
                 }else if (cookie.getName().equals("theme")){
