@@ -1,13 +1,19 @@
-import {useState, useEffect, useRef} from "react";
+import {useState, useEffect, useRef} from 'react';
+import {useUserPost} from "../context/UserPostContext.jsx";
+import {useVideoComments} from "../context/VideoCommentsContext.jsx";
 
-function ProfileVideo() {
+function VideoComments() {
     const apiUrl = import.meta.env.VITE_API_URL;
-    const [content, setContent] = useState({});
     const [badImages, setBadImages] = useState(() => new Set());
-    const [p, setP] = useState("1");
-    const [s, setS] = useState("16");
-    const [f, setF] = useState("hot");
-
+    const { content, setContent, setP, setS } = useVideoComments();
+    const { userId } = useUserPost();
+    const [modal, setModal] = useState({
+        status: false,
+        header: "Are you sure?",
+        body: "You are about to delete this comment.",
+        onclick: (e) => {setModal(prev => ({...prev, ["status"]: false}))}
+    });
+    const modalRef = useRef(null);
     const handleImageError = (id) => {
         setBadImages(prev => {
             const next = new Set(prev);
@@ -15,35 +21,59 @@ function ProfileVideo() {
             return next;
         });
     };
-    useEffect(() => {
-        async function fetchUserPosts() {
+    /*useEffect(() => {
+        async function fetchVideoComments() {
             try {
-                const response = await fetch(apiUrl + 'u/' + userId+`/p/?p=${encodeURIComponent(p)}&s=${encodeURIComponent(s)}&f=${encodeURIComponent(f)}`);
+                const response = await fetch(apiUrl + 'p/' + postId+`/c/?p=${encodeURIComponent(p)}&s=${encodeURIComponent(s)}`);
                 const data = await response.json();
                 setContent(data.content);
             } catch (error) {
                 console.error("Error fetching user:", error);
             }
         }
+        fetchVideoComments();
+    }, [p,s]);*/
 
-        fetchUserPosts();
-    }, [p,s,f]);
+    useEffect(() => {
+        if (modal.status){
+            const mod = new bootstrap.Modal(modalRef.current);
+            mod.show()
+        }
+    },[modal])
 
-    const formatDate = (ms) => {
-        const date = new Date(ms);
+    async function deleteComment(id){
+        try{
+            const response = await fetch(apiUrl+'p/'+postId+'/c/'+id, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+            const data=await response.json();
+            if (data.status.includes('200')){
+                setContent(prev => ({
+                    ...prev,
+                    content: prev.content.filter(item => item.id !== id)
+                }));
+            }
+        }catch(err){
+            console.error("Error deleting comment: ", id);
+        }
+    }
 
-        return date.toLocaleString("en-GB", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        }).replace(",", "");
-    };
-    if (content && content.totalElements && content.totalElements!==0){
+    const removeComment = (id) => {
+        setModal(prev => ({
+            ...prev,
+            ["status"]: true,
+            ["onclick"]: async () => {
+            setModal(prev => ({...prev, ["status"]: false})); await deleteComment(id);}
+        }));
+    }
+
+
+    if (content && content.totalElements && content.totalElements!==0) {
         const pages = [];
-        if (content.totalPages>6){
+        if (content.totalPages > 6) {
             const start =
                 content.page < 4
                     ? 1
@@ -64,10 +94,36 @@ function ProfileVideo() {
         }
         return (
             <>
+                {userId && userId!==0 && currentUserId!==0 && (
+                    <div className="modal fade" ref={modalRef} id="updateModal" tabIndex="-1"
+                         aria-labelledby="updateModalLabel"
+                         aria-hidden="true">
+                        <div className="modal-dialog">
+                            <div className="modal-content">
+                                <div className="modal-header">
+                                    <h1 className="modal-title fs-5" id="updateModalLabel">{modal.header}</h1>
+                                    <button type="button" className="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                </div>
+                                <div className="modal-body">
+                                    <span>{modal.body}</span>
+                                </div>
+                                <div className="modal-footer">
+                                    <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close
+                                    </button>
+                                    <button type="button" className="btn btn-primary" data-bs-dismiss="modal"
+                                            onClick={modal.onclick}>
+                                        Continue
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 <div className="d-flex justify-content-between align-items-center mb-3">
 
                     <div className="text-muted small">
-                         Showing {1+content.size*(content.page-1)}-{content.size*content.page} of {content.totalElements} total results
+                        Showing {1+content.size*(content.page-1)}-{content.size*content.page} of {content.totalElements} total results
                     </div>
 
                     <div id="sizeSortForm" className="d-flex align-items-center gap-2">
@@ -87,84 +143,63 @@ function ProfileVideo() {
                                 <option value={content.size}>{content.size}</option>
                             )}
                         </select>
-
-                        <div className="dropdown">
-                            <button className="btn" type="button" data-bs-toggle="dropdown">
-                                <i className="bi bi-filter"></i>
-                            </button>
-                            <ul className="dropdown-menu">
-                                <li><span style={{"padding": "0.25rem 1rem"}}>Sort</span></li>
-                                <li>
-                                    <hr className="dropdown-divider"/>
-                                </li>
-                                <li><a className="dropdown-item" href="#" data-value="hot" onClick={(e) => {e.preventDefault();setF(e.currentTarget.dataset.value)}}>Hot</a></li>
-                                <li><a className="dropdown-item" href="#" data-value="latest" onClick={(e) => {e.preventDefault();setF(e.currentTarget.dataset.value)}}>Latest</a></li>
-                            </ul>
-                        </div>
                     </div>
 
                 </div>
-                <div className="row g-4">
-                    {content.content && content.content.map((post, index) => (
-                        <div className="col-lg-3 col-md-4 col-sm-6" key={index}>
-                            <article className="video-card">
-
-                                <a href={`/p/${post.id}`} className="thumbnail-link text-body">
-                                    <img className="video-thumbnail"
-                                         src={`/media/t/${post.id}`}
-                                         onError={() => {this.src='/video_placeholder.jpg'}}/>
-                                </a>
-
-                                <div className="video-info d-flex mt-2">
-
-                                    <a className="channel-avatar text-body"
-                                       href={`/u/${post.userId}`}>
-                                        <img src={`/media/u/${post.userId}`}
-                                             className={badImages.has(post.id) ? "d-none" : ""}
-                                             onError={() => handleImageError(post.id)}/>
-                                        <i className={`bi bi-person-circle ${badImages.has(post.id) ? "" : "d-none"}`}
-                                            style={{"fontSize": "36px"}}></i>
+                <div className="card-body container">
+                    {content.content && content.content.map((comment, index) => (
+                            <div
+                                className="video-info d-flex mt-2 text-break justify-content-between outline bg-body-tertiary rounded p-2 ps-3"
+                                key={index}>
+                                <div className="d-flex align-items-center">
+                                    <a className="text-body"
+                                       href={`/u/${comment.userId}`}>
+                                        <img className="rounded-circle object-fit-cover text-body"
+                                             style={{"width": "36px", "height": "36px"}}
+                                             src={`/media/u/${comment.userId}`}
+                                             onError={() => handleImageError(comment.id)}/>
+                                        <i className="bi bi-person-circle d-none" style={{"fontSize": "36px"}}></i>
                                     </a>
-
-                                    <div className="video-meta">
-
-                                        <a href={`/p/${post.id}`}
-                                           className="video-title text-decoration-none text-body">
-                                            <span>{post.title}</span>
+                                    <div className="ms-3 d-flex flex-column">
+                                        <a href={`/u/${comment.userId}`}
+                                           className="text-decoration-none text-muted">
+                                            <span>{comment.username}</span>
                                         </a>
-
-                                        <a href={`/u/${post.userId}`}
-                                           className="channel-name text-decoration-none text-muted">
-                                            <span>{post.username}</span>
-                                        </a>
-
-                                        <div className="video-date text-muted">
-                                    <span>{formatDate(post.createdAt)}</span>
-                                        </div>
-
+                                        <span>{comment.comment}</span>
                                     </div>
                                 </div>
+                                {(comment.userId===currentUserId || (userId && userId!==0 && comment.userId===userId && currentUserId===userId)) && (
 
-                            </article>
-                        </div>
+                                        <div className="d-flex flex-column align-items-center">
+                                            <button className="btn" onClick={() => removeComment(comment.id)}>
+                                                <i className="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+
+                                )}
+
+                            </div>
                         )
                     )}
                 </div>
 
                 <div id="paginationForm" className="mt-5">
                     <nav>
-                        {content.totalPages<=6 && (
+                        {content.totalPages <= 6 && (
                             <ul className="pagination justify-content-center">
                                 <li className="page-item">
                                     <a className="page-link page-prev-next" data-total-pages={content.totalPages}
-                                       data-next-page={content.page-1} href="#" aria-label="Previous"
-                                       onClick={(e) => {e.preventDefault();parseInt(e.currentTarget.dataset.nextPage) >= 1 && parseInt(e.currentTarget.dataset.nextPage) <= parseInt(e.currentTarget.dataset.totalPages) ? setP(e.currentTarget.dataset.nextPage) : null}}>
+                                       data-next-page={content.page - 1} href="#" aria-label="Previous"
+                                       onClick={(e) => {
+                                           e.preventDefault();
+                                           parseInt(e.currentTarget.dataset.nextPage) >= 1 && parseInt(e.currentTarget.dataset.nextPage) <= parseInt(e.currentTarget.dataset.totalPages) ? setP(e.currentTarget.dataset.nextPage) : null
+                                       }}>
                                         <span aria-hidden="true">&laquo;</span>
                                     </a>
                                 </li>
-                                {Array.from({ length: content.totalPages }).map((_,i)=>(
-                                    <li className={`page-item ${i+1===content.page ? "active" : ""}`} key={i+1}>
-                                        <a className={`page-link page-num ${i+1 === content.page ? "active" : ""}`}
+                                {Array.from({length: content.totalPages}).map((_, i) => (
+                                    <li className={`page-item ${i + 1 === content.page ? "active" : ""}`} key={i + 1}>
+                                    <a className={`page-link page-num ${i+1 === content.page ? "active" : ""}`}
                                            href="#" data-value={i+1}
                                            onClick={(e) => {e.preventDefault();setP(e.currentTarget.dataset.value)}}>{i+1}</a>
                                     </li>
@@ -235,10 +270,9 @@ function ProfileVideo() {
     }else {
         return (
             <div className="text-center">
-                <p className="fs-2 fw-medium mt-4 text-muted">Content not found</p>
+                <p className="fs-2 fw-medium mt-4 text-muted">Comments not found</p>
             </div>
         )
     }
 }
-
-export default ProfileVideo;
+export default VideoComments;

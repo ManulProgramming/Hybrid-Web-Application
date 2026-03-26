@@ -21,6 +21,7 @@ function Profile() {
         onclick: (e) => {setModal(prev => ({...prev, ["status"]: false}))}
     });
     const modalRef = useRef(null);
+    const [globalError, setGlobalError] = useState({});
 
 
     useEffect(() => {
@@ -28,15 +29,19 @@ function Profile() {
             try {
                 const response = await fetch(apiUrl + 'u/' + userId);
                 const data = await response.json();
+                if (data.status.includes('200')) {
 
-                setFormData({
-                    username: (data.content && data.content.username ? data.content.username : ""),
-                    usermail: (data.content && data.content.usermail ? data.content.usermail : ""),
-                    userpass: "",
-                    oldUserpass: ""
-                });
+                    setFormData({
+                        username: (data.content && data.content.username ? data.content.username : ""),
+                        usermail: (data.content && data.content.usermail ? data.content.usermail : ""),
+                        userpass: "",
+                        oldUserpass: ""
+                    });
+                }else{
+                    setGlobalError({"status": data.status, "msg": data.errors.error});
+                }
             } catch (error) {
-                console.error("Error fetching user:", error);
+                setGlobalError({"status": "Error!", "msg": error.message});
             }
         }
 
@@ -161,7 +166,7 @@ function Profile() {
             await response.json();
             window.location.href = "/login";
         } catch (error) {
-            console.error("Error updating user:", error);
+            console.error("Error logging out user:", error);
         }
     }
 
@@ -411,15 +416,28 @@ function Profile() {
             });
         }
     }
+    if (globalError && globalError.status) {
+        return (
+            <div className="m-5">
+                <div className="text-center">
+                    <h1 className="display-5 fw-bold">{globalError.status}</h1>
+                    <p className="fs-2 fw-medium mt-4">Oops! {globalError.msg}</p>
+                    <a href="/" className="btn btn-light fw-semibold rounded-pill px-4 py-2 custom-btn">
+                        Go Home
+                    </a>
+                </div>
+            </div>
+        )
+    }
 
-    if (userId===currentUserId) {
+    if (userId === currentUserId) {
         return (
             <div className="card-body container">
                 <div className="modal fade" ref={modalRef} id="updateModal" tabIndex="-1"
                      aria-labelledby="updateModalLabel"
                      aria-hidden="true">
                     <div className="modal-dialog">
-                        <div className="modal-content">
+                    <div className="modal-content">
                             <div className="modal-header">
                                 <h1 className="modal-title fs-5" id="updateModalLabel">{modal.header}</h1>
                                 <button type="button" className="btn-close" data-bs-dismiss="modal"

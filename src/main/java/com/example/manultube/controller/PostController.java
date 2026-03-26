@@ -179,7 +179,7 @@ public class PostController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
     @PostMapping({"/{id}/c","/{id}/c/"})
-    public ResponseEntity<TypicalResponse<Comment>> getComments(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @Valid @ModelAttribute Comment comment) {
+    public ResponseEntity<TypicalResponse<Comment>> createComments(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @Valid @RequestBody Comment comment) {
         TypicalResponse<Comment> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
         String token = (String) cookieMap.get("token");

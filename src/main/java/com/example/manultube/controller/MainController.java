@@ -399,8 +399,8 @@ public class MainController {
                 response.addCookie(cookieService.deleteCookie(spec_cookie));
             }
         }
-        PostResponseDTO post = postService.getById(id);
         Map<String, Object> customMap = new HashMap<>();
+        /*PostResponseDTO post = postService.getById(id);
         customMap.put("id", post.getId());
         customMap.put("userId", post.getUserId());
         customMap.put("username", post.getUsername());
@@ -408,10 +408,9 @@ public class MainController {
         customMap.put("description", post.getDescription());
         customMap.put("upvotes", post.getUpvotes());
         customMap.put("downvotes", post.getDownvotes());
-        customMap.put("createdAt", post.getCreatedAt());
-        System.out.println(postService.getComments(id, 1, 16).getContent());
-        customMap.put("comments", postService.getComments(id, 1, 16));
-        if (res.getCurrentUser()!=null) {
+        customMap.put("createdAt", post.getCreatedAt());*/
+        //customMap.put("comments", postService.getComments(id, 1, 16));
+        /*if (res.getCurrentUser()!=null) {
             Rating rating = postService.getRating((Long) res.getCurrentUser().get("id"),id);
             if (rating!=null) {
                 customMap.put("rating", rating.getRating());
@@ -420,9 +419,9 @@ public class MainController {
             }
         }else{
             customMap.put("rating", null);
-        }
+        }*/
         res.setStatus(HttpStatus.OK);
-        res.setParams(Map.of("theme", theme));
+        res.setParams(Map.of("theme", theme, "postId", id));
         res.setContent(customMap);
         model.addAttribute("res", res);
         return "post.html";

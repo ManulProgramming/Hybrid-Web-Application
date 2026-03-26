@@ -6,6 +6,7 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Object> handleMethodArgumentNotValid(
+    public ResponseEntity<APIError> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex) {
 
         Map<String, String> errors = ex.getBindingResult()
@@ -36,11 +37,14 @@ public class GlobalExceptionHandler {
                 errors
         );
 
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return ResponseEntity
+                .status(response.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(response);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<Object> handleConstraintViolation(
+    public ResponseEntity<APIError> handleConstraintViolation(
             ConstraintViolationException ex) {
 
         Map<String, String> errors = ex.getConstraintViolations()
@@ -55,50 +59,65 @@ public class GlobalExceptionHandler {
                 "Constraint violation",
                 errors
         );
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return ResponseEntity
+                .status(response.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(response);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<Object> handleDataIntegrityViolation(
+    public ResponseEntity<APIError> handleDataIntegrityViolation(
             DataIntegrityViolationException ex){
         APIError response = new APIError(
                 HttpStatus.BAD_REQUEST,
                 "Data integrity violation",
                 Map.of("error", "Data already exists")
         );
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return ResponseEntity
+                .status(response.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(response);
     }
 
     @ExceptionHandler(EmptyResultDataAccessException.class)
-    public ResponseEntity<Object> handleEmptyResultDataAccess(
+    public ResponseEntity<APIError> handleEmptyResultDataAccess(
             EmptyResultDataAccessException ex){
         APIError response = new APIError(
                 HttpStatus.BAD_REQUEST,
                 "Empty result",
                 Map.of("error", "Data not found")
         );
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return ResponseEntity
+                .status(response.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(response);
     }
 
     @ExceptionHandler(DataAccessResourceFailureException.class)
-    public ResponseEntity<Object> handleDataAccessResourceFailureException(
+    public ResponseEntity<APIError> handleDataAccessResourceFailureException(
             DataAccessResourceFailureException ex){
         APIError response = new APIError(
                 HttpStatus.BAD_REQUEST,
                 "Data Access Resource Failure",
                 Map.of("error",ex.getMessage())
         );
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return ResponseEntity
+                .status(response.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(response);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleGeneralException(Exception ex) {
+    public ResponseEntity<APIError> handleGeneralException(Exception ex) {
 
         APIError response = new APIError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal server error",
                 Map.of("error", ex.getMessage())
         );
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        return ResponseEntity
+                .status(response.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(response);
     }
 }

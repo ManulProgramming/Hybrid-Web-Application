@@ -8,10 +8,12 @@
             position: relative;
             display: inline-block;
         }
+
         .image-wrapper img {
             object-fit: cover;
             transition: opacity 0.3s ease;
         }
+
         .overlay {
             position: absolute;
             inset: 0;
@@ -22,6 +24,7 @@
             opacity: 0;
             transition: opacity 0.3s ease;
         }
+
         .overlay p {
             color: white;
             font-size: 2rem;
@@ -34,24 +37,96 @@
         .image-wrapper:hover .custom-overlay {
             opacity: 0;
         }
+
+        .description-wrapper {
+            position: relative;
+            max-height: 4.5em; /* ~3 lines */
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .description-wrapper::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2em;
+            background: linear-gradient(
+                    to bottom,
+                    rgba(0, 0, 0, 0),
+                    var(--bs-body-bg)
+            );
+        }
+
+        .description-wrapper.expanded {
+            max-height: none;
+        }
+
+        .description-wrapper.expanded::after {
+            display: none;
+        }
     </style>
 </head>
 <body>
 <div layout:fragment="content">
     <div th:if="${res.content}">
         <div class="container mt-4">
+
             <div class="embed-responsive embed-responsive-16by9 ratio ratio-16x9">
                 <video controls>
-                    <source th:src="@{/media/p/{postId}(postId=${res.content.id})}" type="video/mp4"
+                    <source th:src="@{/media/p/{postId}(postId=${res.params.postId})}" type="video/mp4"
                             onerror="(()=>{this.src=''; document.getElementById('imgWrapper').classList.remove('d-none'); this.parentElement.parentElement.remove();})()">
                 </video>
             </div>
             <div id="imgWrapper" class="d-none image-wrapper embed-responsive embed-responsive-16by9 ratio ratio-16x9">
                 <img src="/video_placeholder.jpg">
                 <div class="overlay">
-                    <p>Loading or missing</p>
+                    <p>Loading...</p>
                 </div>
             </div>
+
+            <div id="react-video">
+
+                <div id="react-video-info">
+                    <div class="mt-0 mb-2 bg-body-secondary rounded" style="width:100%; height:36px">
+
+                    </div>
+                    <div class="row d-flex">
+                        <div class="col-auto">
+                            <div class="bg-body-secondary rounded-circle" style="width:50px; height:50px;">
+
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="mt-0 mb-2 bg-body-secondary rounded" style="width:100%; height:36px">
+
+                            </div>
+                            <div class="mt-0 mb-2 bg-body-secondary rounded" style="width:100%; height:36px">
+
+                            </div>
+                        </div>
+                        <div class="col-auto" style="width: 150px">
+                            <div class="row-auto d-flex mb-2" style="">
+                                <div class="bg-body-secondary rounded col-auto" style="width: 100%; height: 36px"></div>
+                            </div>
+                            <div class="bg-body-secondary rounded row-auto" style="height: 36px"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="mt-3 bg-body border-2 border-top"/>
+
+                <div id="react-video-comments">
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border text-primary" role="status">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!--
             <div class="fw-bold fs-5 lh-base text-break">
                 <span th:text="${res.content.title}"></span>
             </div>
@@ -94,10 +169,16 @@
 
                 </div>
             </div>
+            <div class="description-wrapper mt-3" onclick="this.classList.toggle('expanded')" th:if="${res.content.description!=''}">
+                <p style="white-space: pre-line;" th:text="${res.content.description}">
+                </p>
+            </div>-->
         </div>
-        <div th:if="${!#lists.isEmpty(res.content.comments.content)}" class="container">
-            <hr class="mt-5 bg-body border-2 border-top" />
-            <p class="fs-3 fw-medium mt-4 text-muted">Comments</p>
+        <!--<div th:if="${!#lists.isEmpty(res.content.comments.content)}" class="container">
+
+
+
+
             <div class="d-flex justify-content-between align-items-center mb-3">
 
                 <div class="text-muted small"
@@ -123,22 +204,28 @@
                 </form>
             </div>
             <div class="card-body container">
-                <div class="video-info d-flex mt-2 text-break" th:each="comment : ${res.content.comments.content}">
-
-                    <a class="text-body"
-                       th:href="@{/u/{id}(id=${comment.userId})}">
-                        <img class="rounded-circle object-fit-cover text-body mt-2" style="width: 36px; height: 36px;" th:src="@{/media/u/{id}(id=${comment.userId})}"
-                             onerror="handleImageError(this)"/>
-                        <i class="bi bi-person-circle d-none" style="font-size: 36px"></i>
-                    </a>
-
-                    <div class="ms-3 d-flex flex-column">
-                        <a th:href="@{/u/{id}(id=${comment.userId})}"
-                           class="text-decoration-none text-muted">
-                            <p th:text="${comment.username}"></p>
+                <div class="video-info d-flex mt-2 text-break justify-content-between outline bg-body-tertiary rounded p-2 ps-3"
+                     th:each="comment : ${res.content.comments.content}">
+                    <div class="d-flex align-items-center">
+                        <a class="text-body"
+                           th:href="@{/u/{id}(id=${comment.userId})}">
+                            <img class="rounded-circle object-fit-cover text-body" style="width: 36px; height: 36px;"
+                                 th:src="@{/media/u/{id}(id=${comment.userId})}"
+                                 onerror="handleImageError(this)"/>
+                            <i class="bi bi-person-circle d-none" style="font-size: 36px"></i>
                         </a>
-                        <p th:text="${comment.comment}"></p>
-                        <p></p>
+                        <div class="ms-3 d-flex flex-column">
+                            <a th:href="@{/u/{id}(id=${comment.userId})}"
+                               class="text-decoration-none text-muted">
+                                <span th:text="${comment.username}"></span>
+                            </a>
+                            <span th:text="${comment.comment}"></span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column align-items-center">
+                        <button class="btn">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -212,81 +299,84 @@
                 <p class="fs-2 fw-medium mt-4 text-muted">Comments not found</p>
             </div>
         </div>
-    </div>
-    <div th:unless="${res.content}">
-        <div class="text-center">
-            <h1 class="display-1 fw-bold">404</h1>
-            <p class="fs-2 fw-medium mt-4">Oops! Content not found</p>
-            <a href="/" class="btn btn-light fw-semibold rounded-pill px-4 py-2 custom-btn">
-                Go Home
-            </a>
+    </div>-->
+        <div th:unless="${res.content}">
+            <div class="text-center">
+                <h1 class="display-1 fw-bold">404</h1>
+                <p class="fs-2 fw-medium mt-4">Oops! Content not found</p>
+                <a href="/" class="btn btn-light fw-semibold rounded-pill px-4 py-2 custom-btn">
+                    Go Home
+                </a>
+            </div>
         </div>
+        <script type="module" src="http://localhost:5173/src/post.jsx"></script>
     </div>
-</div>
 
-<script layout:fragment="script">
-    document.querySelectorAll('.dropdown-item').forEach(item => {
-        item.addEventListener('click', function (e) {
-            e.preventDefault();
+    <script th:inline="javascript" layout:fragment="script">
+        const postId = /*[[${res.params.postId}]]*/ -1;
+        const currentUserId = /*[[${res.currentUser!=null ? res.currentUser.id : 0}]]*/ 0;
+        /*document.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', function (e) {
+                e.preventDefault();
 
-            const value = this.getAttribute('data-value');
-            const form = document.getElementById('sizeSortForm');
-            if (!form.querySelector(`input[name="f"]`)) {
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = "f";
-                hiddenInput.value = value;
-                form.appendChild(hiddenInput);
-            } else {
-                form.querySelector(`input[name="f"]`).value = value;
-            }
-
-            form.requestSubmit();
-        });
-    });
-    document.querySelectorAll('.page-num').forEach(item => {
-        item.addEventListener('click', function (e) {
-            e.preventDefault();
-
-            if (!(e.target.classList.contains('active'))) {
-                const form = document.getElementById('paginationForm');
-                let value;
-                if (e.target.classList.contains('spacer')) {
-                    let newPage = prompt('Navigate to page');
-                    if (newPage) {
-                        value = newPage;
-                    } else {
-                        return;
-                    }
+                const value = this.getAttribute('data-value');
+                const form = document.getElementById('sizeSortForm');
+                if (!form.querySelector(`input[name="f"]`)) {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = "f";
+                    hiddenInput.value = value;
+                    form.appendChild(hiddenInput);
                 } else {
-                    value = this.getAttribute('data-value');
+                    form.querySelector(`input[name="f"]`).value = value;
                 }
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = "p";
-                hiddenInput.value = value;
-                form.appendChild(hiddenInput);
+
                 form.requestSubmit();
-            }
+            });
+        });
+        document.querySelectorAll('.page-num').forEach(item => {
+            item.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                if (!(e.target.classList.contains('active'))) {
+                    const form = document.getElementById('paginationForm');
+                    let value;
+                    if (e.target.classList.contains('spacer')) {
+                        let newPage = prompt('Navigate to page');
+                        if (newPage) {
+                            value = newPage;
+                        } else {
+                            return;
+                        }
+                    } else {
+                        value = this.getAttribute('data-value');
+                    }
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = "p";
+                    hiddenInput.value = value;
+                    form.appendChild(hiddenInput);
+                    form.requestSubmit();
+                }
+            })
         })
-    })
-    document.querySelectorAll('.page-prev-next').forEach(item => {
-        item.addEventListener('click', function (e) {
-            e.preventDefault();
-            const totalPages = this.getAttribute('data-total-pages');
-            const nextPage = this.getAttribute('data-next-page');
-            const form = document.getElementById('paginationForm');
-            if (parseInt(nextPage) >= 1 && parseInt(nextPage) <= parseInt(totalPages)) {
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = "p";
-                hiddenInput.value = nextPage;
-                form.appendChild(hiddenInput);
-                form.requestSubmit();
-            }
-        })
-    });
-</script>
+        document.querySelectorAll('.page-prev-next').forEach(item => {
+            item.addEventListener('click', function (e) {
+                e.preventDefault();
+                const totalPages = this.getAttribute('data-total-pages');
+                const nextPage = this.getAttribute('data-next-page');
+                const form = document.getElementById('paginationForm');
+                if (parseInt(nextPage) >= 1 && parseInt(nextPage) <= parseInt(totalPages)) {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = "p";
+                    hiddenInput.value = nextPage;
+                    form.appendChild(hiddenInput);
+                    form.requestSubmit();
+                }
+            })
+        });*/
+    </script>
 
 </body>
 </html>
