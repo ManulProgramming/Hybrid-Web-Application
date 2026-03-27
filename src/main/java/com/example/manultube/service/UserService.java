@@ -7,6 +7,7 @@ import com.example.manultube.dto.User.UserResponseDTO;
 import com.example.manultube.dto.User.UserUpdateDTO;
 import com.example.manultube.model.User;
 import com.example.manultube.repository.UserRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,11 @@ public class UserService {
         user.setUsername(userRegisterDTO.getUsername());
         user.setUsermail(userRegisterDTO.getUsermail());
         user.setUserpass(encoder.encode(userRegisterDTO.getUserpass()));
-        return toDto(userRepository.insertUser(user));
+        try {
+            return toDto(userRepository.insertUser(user));
+        }catch (DataIntegrityViolationException e){
+            return null;
+        }
     }
     public Boolean doesPassMatch(String rawPassword,Long userId){
         return encoder.matches(rawPassword, userRepository.getUserById(userId).getUserpass());

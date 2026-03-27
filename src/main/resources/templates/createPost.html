@@ -86,7 +86,7 @@
             <div class="row g-4 align-items-center">
                 <div class="col-12 col-lg-5 text-center">
                     <div class="video-thumbnail mt-2 mt-lg-0">
-                        <input type="file" id="fileInput" name="file" style="display: none;" onchange="changeImg()" accept=".mp4">
+                        <input type="file" id="fileInput" name="file" style="display: none;" onchange="changeImg()" accept=".mp4, .webm">
                         <div id="imgWrapper" class="image-wrapper" onclick="document.getElementById('fileInput').click();">
                             <img id="avatarImage"
                                  src="/video_placeholder.jpg">
@@ -105,7 +105,7 @@
                     </div>
                     <div class="mb-3 text-start">
                         <label class="form-label" for="description">Description:</label>
-                        <textarea class="form-control" id="description" type="text" name="description" maxlength="2000" placeholder="Enter description..."></textarea>
+                        <textarea class="form-control" id="description" name="description" maxlength="2000" placeholder="Enter description..." rows="4"></textarea>
                     </div>
                     <button class="btn btn-primary mt-2" type="button" onclick="sendForm(event)"><i class="bi bi-upload"></i> Create Video</button>
                 </div>
@@ -128,7 +128,7 @@
             titleInput.classList.add('is-invalid');
             filename.classList.remove('text-muted');
             filename.classList.add('text-danger');
-            filename.innerText="Something is wrong with the file!";
+            filename.innerText="Make sure the video is in correct MP4 format!";
             avatarImage.classList.remove('border');
             avatarImage.classList.remove('border-success');
             avatarImage.classList.remove('border-2');
@@ -217,7 +217,7 @@
             titleInput.classList.add('is-invalid');
             should_we = false;
         }
-        if (videoInput.files[0]){
+        if (videoInput.files[0] && videoInput.files[0].size<1000*1000*1000){
             if (should_we) {
                 postForm.submit();
             }

@@ -18,6 +18,14 @@ function Video() {
     const [globalError, setGlobalError] = useState({});
     const [descriptionExpanded, setDescriptionExpanded] = useState(false);
     const { userId, setUserId } = useUserPost();
+    const [errors, setErrors] = useState({});
+    const [modal, setModal] = useState({
+        status: false,
+        header: "Are you sure?",
+        body: "You are about to delete this post",
+        onclick: (e) => {setModal(prev => ({...prev, ["status"]: false}))}
+    });
+    const modalRef = useRef(null);
 
     const formatDate = (ms) => {
         const date = new Date(ms);
@@ -72,7 +80,140 @@ function Video() {
             }
         }
         fetchVideoRating();
-    }, [])
+    }, []);
+
+    async function deletePost(){
+        let modalHeader = '404';
+        let modalBody = 'Unexpected error occurred.';
+        try {
+            const response = await fetch(apiUrl + 'p/' + postId, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            });
+            const data = await response.json();
+            modalHeader = data.status;
+            if (data.status.includes('401')){
+                modalBody = "Unauthorized!";
+                setModal({
+                    status: true,
+                    header: modalHeader,
+                    body: modalBody,
+                    onclick: (e) => {setModal(prev => ({...prev, ["status"]: false}))}
+                });
+            }else if (!data.status.includes('200')) {
+                modalBody = "Unexpected error occurred.";
+                setModal({
+                    status: true,
+                    header: modalHeader,
+                    body: modalBody,
+                    onclick: (e) => {setModal(prev => ({...prev, ["status"]: false}))}
+                });
+            }else{
+                window.location.href = "/";
+            }
+
+        }catch(error){
+            console.error("Error deleting post:", error);
+        }
+    }
+
+    const handleDelete = () => {
+        let modalBodyText= <>
+            <b>You are about to delete this post!</b>
+        </>;
+        setModal({
+            status: true,
+            header: "Are you sure?",
+            body: modalBodyText,
+            onclick: async () => {setModal(prev => ({...prev, ["status"]: false})); await deletePost();}
+        });
+    }
+
+    const validate = (name, value) => {
+        let error = '';
+
+        if (name === 'title'){
+            if (!(/^.{1,100}$/.test(value))) {
+                error = 'Unvalid title';
+            }
+        }
+        if (name==="description"){
+            if (!(/.{0,2000}/.test(value))) {
+                error = 'Unvalid description';
+            }
+        }
+
+        return error;
+    };
+
+    useEffect(() => {
+        if (modal.status){
+            const mod = new bootstrap.Modal(modalRef.current);
+            mod.show()
+        }
+    },[modal])
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+
+        setErrors(prev => ({
+            ...prev,
+            [name]: validate(name, value)
+        }));
+    };
+
+    const handleSubmit = async () => {
+        let should_we = false;
+        if (/^.{1,100}$/.test(formData.title)) {
+            if (/.{0,2000}/.test(formData.description)) {
+                should_we = true;
+            }else{
+                setErrors(prev => ({
+                    ...prev,
+                    ["description"]: validate("description", formData.description)
+                }));
+            }
+        }else{
+            setErrors(prev => ({
+                ...prev,
+                ["title"]: validate("title", formData.title)
+            }));
+        }
+        if (should_we) {
+            try{
+                const response = await fetch(apiUrl + 'p/' +postId, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(formData)
+                });
+                const data = await response.json();
+                if (data.status.includes('200') && data.content) {
+                    setErrors({});
+                    setFormData(prev => ({
+                        ...prev,
+                        ["title"]: data.content.title,
+                        ["description"]: data.content.description,
+                    }));
+                }else{
+                    setErrors({
+                        "title": "Unvalid title",
+                        "description": "Unvalid description"
+                    });
+                }
+            }catch(error) {
+                console.error(error);
+            }
+        }
+    }
 
     const changeRating = async (rating) => {
         if (currentUserId !== 0) {
@@ -154,8 +295,41 @@ function Video() {
     if (formData.userId !== 0) {
         return (
             <>
-                <div className="fw-bold fs-5 lh-base text-break">
-                    <span>{formData.title}</span>
+                {currentUserId===formData.userId && (
+                    <div className="modal fade" ref={modalRef} id="updateModal" tabIndex="-1"
+                         aria-labelledby="updateModalLabel"
+                         aria-hidden="true">
+                        <div className="modal-dialog">
+                            <div className="modal-content">
+                                <div className="modal-header">
+                                    <h1 className="modal-title fs-5" id="updateModalLabel">{modal.header}</h1>
+                                    <button type="button" className="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                </div>
+                                <div className="modal-body">
+                                    <span>{modal.body}</span>
+                                </div>
+                                <div className="modal-footer">
+                                    <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close
+                                    </button>
+                                    <button type="button" className="btn btn-primary" data-bs-dismiss="modal"
+                                            onClick={modal.onclick}>
+                                        Continue
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <div className="fw-bold fs-5 lh-base text-break mt-2">
+                {currentUserId===formData.userId
+                    ?
+                    <input className={`form-control ${errors.title ? "is-invalid" : ""}`} id="title" type="text"
+                               name="title" maxLength="100"
+                               placeholder="Enter Title..." required
+                               value={formData.title} onChange={handleChange}/>
+                    :
+                    <span>{formData.title}</span>}
                 </div>
                 <div className="video-info mt-2 row d-flex">
                         <div className="col-auto">
@@ -174,6 +348,7 @@ function Video() {
                                className="text-decoration-none text-body" style={{"fontSize": "1.1rem"}}>
                                 <span>{formData.username}</span>
                             </a>
+
                             <div className="text-muted" style={{"fontSize": "0.7rem"}}>
                                 <span>{formatDate(formData.createdAt)}</span>
                             </div>
@@ -201,16 +376,38 @@ function Video() {
                         </div>
                     </div>
                 </div>
-                {formData.description && formData.description.length > 0 && (
-                    <div className={`description-wrapper mt-3 ${descriptionExpanded ? 'expanded' : ''}`}
-                         onClick={() => {
-                             setDescriptionExpanded(!descriptionExpanded);
-                         }}>
-                        <p style={{"whiteSpace": "pre-line"}}>
-                            {formData.description}
-                        </p>
+                {currentUserId===formData.userId
+                    ?
+                    <div className="mt-3">
+                    <textarea className={`form-control ${errors.description ? "is-invalid" : ""}`}
+                    name="description" id="description" maxLength="2000" placeholder="Enter description..." rows="4"
+                              required
+                              value={formData.description}
+                              onChange={handleChange}
+                    ></textarea>
+                        <div className="row mx-3 mt-3 gap-3 gap-md-5 justify-content-center">
+                            <button className="col-8 col-md-2 btn btn-success" onClick={handleSubmit}><i
+                                className="bi bi-floppy"></i> Save
+                            </button>
+                            <button className="col-8 col-md-2 btn btn-danger" onClick={handleDelete}><i
+                                className="bi bi-trash3"></i> Delete
+                            </button>
+                        </div>
                     </div>
-                )}
+                    :
+                    <>
+                        {formData.description && formData.description.length > 0 && (
+                            <div className={`description-wrapper mt-3 ${descriptionExpanded ? 'expanded' : ''}`}
+                                 onClick={() => {
+                                     setDescriptionExpanded(!descriptionExpanded);
+                                 }}>
+                                <p style={{"whiteSpace": "pre-line"}}>
+                                    {formData.description}
+                                </p>
+                            </div>
+                        )}
+                    </>
+                }
             </>
         )
     }

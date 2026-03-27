@@ -113,16 +113,17 @@
                              onerror="this.src='/video_placeholder.jpg';">
                     </a>
 
-                    <div class="video-info d-flex mt-2">
+                    <div class="video-info d-flex row mt-2">
+                        <div class="col-auto">
+                            <a class="text-body"
+                               th:href="@{/u/{id}(id=${post.userId})}">
+                                <img class="rounded-circle object-fit-cover mt-2" style="width: 36px; height: 36px;" th:src="@{/media/u/{id}(id=${post.userId})}"
+                                     onerror="handleImageError(this)"/>
+                                <i class="bi bi-person-circle d-none" style="font-size: 36px"></i>
+                            </a>
+                        </div>
 
-                        <a class="text-body"
-                           th:href="@{/u/{id}(id=${post.userId})}">
-                            <img class="rounded-circle object-fit-cover mt-2" style="width: 36px; height: 36px;" th:src="@{/media/u/{id}(id=${post.userId})}"
-                                 onerror="handleImageError(this)"/>
-                            <i class="bi bi-person-circle d-none" style="font-size: 36px"></i>
-                        </a>
-
-                        <div class="ms-3 d-flex flex-column">
+                        <div class="col overflow-hidden text-truncate">
 
                             <a th:href="@{/p/{id}(id=${post.id})}"
                                class="video-title text-decoration-none text-body">

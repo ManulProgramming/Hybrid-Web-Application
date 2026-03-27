@@ -115,18 +115,19 @@ function ProfileVideo() {
                                          onError={() => {this.src='/video_placeholder.jpg'}}/>
                                 </a>
 
-                                <div className="video-info d-flex mt-2">
+                                <div className="video-info d-flex row mt-2">
+                                    <div className="col-auto">
+                                        <a className="channel-avatar text-body"
+                                           href={`/u/${post.userId}`}>
+                                            <img src={`/media/u/${post.userId}`}
+                                                 className={badImages.has(post.id) ? "d-none" : ""}
+                                                 onError={() => handleImageError(post.id)}/>
+                                            <i className={`bi bi-person-circle ${badImages.has(post.id) ? "" : "d-none"}`}
+                                                style={{"fontSize": "36px"}}></i>
+                                        </a>
+                                    </div>
 
-                                    <a className="channel-avatar text-body"
-                                       href={`/u/${post.userId}`}>
-                                        <img src={`/media/u/${post.userId}`}
-                                             className={badImages.has(post.id) ? "d-none" : ""}
-                                             onError={() => handleImageError(post.id)}/>
-                                        <i className={`bi bi-person-circle ${badImages.has(post.id) ? "" : "d-none"}`}
-                                            style={{"fontSize": "36px"}}></i>
-                                    </a>
-
-                                    <div className="video-meta">
+                                    <div className="col overflow-hidden text-truncate">
 
                                         <a href={`/p/${post.id}`}
                                            className="video-title text-decoration-none text-body">

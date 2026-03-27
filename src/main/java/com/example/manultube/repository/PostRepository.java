@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 
 import java.awt.print.Pageable;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Repository
@@ -268,6 +269,33 @@ public class PostRepository {
         }
         return rating;
     }
+    public void updateUpvotesAndDownvotesForPost(Long postId, Long upvotes, Long downvotes) {
+        String sql = "UPDATE posts SET downvotes = :downvotes, upvotes = :upvotes WHERE id = :id";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("downvotes", downvotes)
+                .addValue("upvotes", upvotes)
+                .addValue("id", postId);
+        jdbcTemplate.update(sql, params);
+    }
+    public List<Map<String, Object>> getCurrentRatings(){
+        String sql = """
+        SELECT
+        postId,
+           COUNT(*) FILTER (WHERE rating = true)  AS "upvotes",
+           COUNT(*) FILTER (WHERE rating = false) AS "downvotes"
+        FROM rating
+        GROUP BY postId
+        ORDER BY postId;
+        """;
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        return jdbcTemplate.queryForList(sql, params);
+    }
+    public List<Rating> getRatingByPost(Long postId) {
+        String sql = "SELECT * FROM rating WHERE postId = :postId";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("postId", postId);
+        return jdbcTemplate.query(sql, params, new BeanPropertyRowMapper<>(Rating.class));
+    }
     public Rating getRating(Long userId, Long postId) {
         String sql = "SELECT * FROM rating WHERE userId = :userId AND postId = :postId";
         MapSqlParameterSource params = new MapSqlParameterSource()
@@ -298,6 +326,18 @@ public class PostRepository {
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("id", postId)
                 .addValue("downvote", downvote);
+        jdbcTemplate.update(sql, params);
+    }
+    public void deleteRatingForUser(Long userId){
+        String sql = "DELETE FROM rating WHERE userId = :userId";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("userId", userId);
+        jdbcTemplate.update(sql, params);
+    }
+    public void deleteRatingForPost(Long postId){
+        String sql = "DELETE FROM rating WHERE postId = :postId";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("postId", postId);
         jdbcTemplate.update(sql, params);
     }
     public Comment insertComment(Comment comment) {
@@ -358,6 +398,18 @@ public class PostRepository {
         String sql = "DELETE FROM comments WHERE id = :id";
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("id", commentId);
+        jdbcTemplate.update(sql, params);
+    }
+    public void deleteCommentsForUserId(long userId) {
+        String sql = "DELETE FROM comments WHERE userId = :userId";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("userId", userId);
+        jdbcTemplate.update(sql, params);
+    }
+    public void deleteCommentsForPostId(long postId) {
+        String sql = "DELETE FROM comments WHERE postId = :postId";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("postId", postId);
         jdbcTemplate.update(sql, params);
     }
 }

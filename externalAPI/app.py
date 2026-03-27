@@ -46,7 +46,7 @@ def process_video(src, dst):
         "-nostdin",
         "-y",
         "-i", src,
-        "-vf", "scale=1280:-1",
+        "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
         "-c:v", "libx264",
         "-preset", "fast",
         "-crf", "23",

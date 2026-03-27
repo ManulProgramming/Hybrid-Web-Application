@@ -45,18 +45,25 @@ public class PostController {
         this.pythonClient = pythonClient;
     }
     private Boolean validateMimeVideo(Path file) throws IOException {
-        Tika tika = new Tika();
-        String mime = tika.detect(file);
+        try (InputStream is = Files.newInputStream(file)) {
+            Tika tika = new Tika();
+            String mime = tika.detect(is, file.getFileName().toString());
 
-        Set<String> allowed = Set.of(
-                "video/mp4", "video/x-matroska"
-        );
+            Set<String> allowed = Set.of(
+                    "video/mp4",
+                    "application/mp4",
+                    "application/x-matroska",
+                    "application/webm",
+                    "video/x-matroska",
+                    "video/webm"
+            );
 
-        if (!allowed.contains(mime)) {
-            Files.deleteIfExists(file);
-            return false;
+            if (!allowed.contains(mime)) {
+                Files.deleteIfExists(file);
+                return false;
+            }
+            return true;
         }
-        return true;
     }
     @GetMapping({"/",""})
     public ResponseEntity<TypicalResponse<Page<PostResponseDTO>>> getPosts(HttpServletRequest request, HttpServletResponse response, @RequestParam(value="p", required = false, defaultValue = "1") Integer page, @RequestParam(value="s", required = false, defaultValue = "16") Integer size, @RequestParam(value="q", required = false, defaultValue = "") String query, @RequestParam(value="f", required = false, defaultValue = "hot") String sort) {
@@ -340,6 +347,8 @@ public class PostController {
                 res.setCurrentUser(userMap);
                 PostResponseDTO postResponseDTO = postService.getById(id);
                 if (postResponseDTO != null && postResponseDTO.getUserId().equals(user.getId())){
+                    postService.deleteAllCommentsByPost(id);
+                    postService.deleteRatingsForPost(id);
                     postService.delete(id);
                     res.setStatus(HttpStatus.OK);
                     return ResponseEntity.status(res.getStatus()).body(res);

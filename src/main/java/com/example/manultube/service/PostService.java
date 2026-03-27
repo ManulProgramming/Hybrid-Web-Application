@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class PostService {
@@ -82,11 +83,18 @@ public class PostService {
         postRepository.updatePost(post);
     }
     public void delete(Long id) {
+        try {
+            Files.deleteIfExists(POST_DIR.resolve(id.toString()));
+            Files.deleteIfExists(POST_DIR.resolve(id.toString()+".jpg"));
+        }catch (IOException ignored){
+        }
         postRepository.deletePost(id);
     }
     public void deleteAllPosts(Long userId) {
         List<Long> ids = getByUserId(userId, 0, null, "").getContent().stream().map(PostResponseDTO::getId).toList();
         for (Long postId : ids) {
+            deleteAllCommentsByPost(postId);
+            deleteRatingsForPost(postId);
             try {
                 Files.deleteIfExists(POST_DIR.resolve(postId.toString()));
                 Files.deleteIfExists(POST_DIR.resolve(postId.toString()+".jpg"));
@@ -94,6 +102,12 @@ public class PostService {
             }
         }
         postRepository.deletePostsForUserId(userId);
+    }
+    public void updateRatingsForPosts() {
+        List<Map<String, Object>> current = postRepository.getCurrentRatings();
+        for (Map<String, Object> map : current) {
+            postRepository.updateUpvotesAndDownvotesForPost((Long) map.get("postId"), (Long) map.get("upvotes"), (Long) map.get("downvotes"));
+        }
     }
     public Rating getRating(Long userId, Long postId) {
         return postRepository.getRating(userId,postId);
@@ -129,6 +143,12 @@ public class PostService {
         }
         return currentRating;
     }
+    public void deleteRatingsForPost(Long postId){
+        postRepository.deleteRatingForPost(postId);
+    }
+    public void deleteRatingsForUser(Long userId){
+        postRepository.deleteRatingForUser(userId);
+    }
     public Comment createComment(Comment comment) {
         return postRepository.insertComment(comment);
     }
@@ -138,7 +158,14 @@ public class PostService {
     public Comment getCommentById(Long commentId) {
         return postRepository.getCommentById(commentId);
     }
+
     public void deleteComment(Long commentId) {
         postRepository.deleteComment(commentId);
+    }
+    public void deleteAllCommentsByUser(Long userId) {
+        postRepository.deleteCommentsForUserId(userId);
+    }
+    public void deleteAllCommentsByPost(Long postId) {
+        postRepository.deleteCommentsForPostId(postId);
     }
 }

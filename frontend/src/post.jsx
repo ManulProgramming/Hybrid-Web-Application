@@ -5,13 +5,6 @@ import VideoComments from "./components/VideoComments.jsx";
 import {VideoCommentsProvider} from "./context/VideoCommentsContext.jsx";
 import VideoCommentNew from "./components/VideoCommentNew.jsx";
 
-/*const postRoot = ReactDOM.createRoot(document.getElementById("react-video-info"));
-postRoot.render(<UserPostProvider><Video /></UserPostProvider>);
-
-const postCommentsRoot = ReactDOM.createRoot(document.getElementById("react-video-comments"));
-postCommentsRoot.render(<UserPostProvider><VideoComments /></UserPostProvider>)*/
-
-
 const postRoot = ReactDOM.createRoot(document.getElementById("react-video"));
 postRoot.render(
     <UserPostProvider>

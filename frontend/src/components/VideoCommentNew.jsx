@@ -3,7 +3,7 @@ import {useVideoComments} from "../context/VideoCommentsContext.jsx";
 
 function VideoCommentNew() {
     const apiUrl = import.meta.env.VITE_API_URL;
-    const { setContent } = useVideoComments();
+    const { content, setContent } = useVideoComments();
     const [commentInput, setCommentInput] = useState("");
     const [error, setError] = useState(false);
     const createComment = async () => {
@@ -22,6 +22,8 @@ function VideoCommentNew() {
                 if (data.status.includes('200')) {
                     setContent(prev => ({
                         ...prev,
+                        totalElements: content.totalElements+1,
+                        totalPages: Math.ceil((content.totalElements+1)/content.size),
                         content: [
                             ...prev.content,
                             data.content

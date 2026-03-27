@@ -223,7 +223,10 @@ public class UserController {
                 res.setCurrentUser(userMap);
                 if (id.equals(userResponseDTO.getId()) && userService.doesPassMatch(user.getOldUserpass(),userResponseDTO.getId())) {
                     sessionService.deleteAllSessions(id);
+                    postService.deleteAllCommentsByUser(id);
+                    postService.deleteRatingsForUser(id);
                     postService.deleteAllPosts(id);
+                    postService.updateRatingsForPosts();
                     userService.deleteUser(id);
                     response.addCookie(cookieService.deleteCookie(spec_cookie));
                     res.setStatus(HttpStatus.OK);

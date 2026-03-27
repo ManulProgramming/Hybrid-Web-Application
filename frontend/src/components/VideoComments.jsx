@@ -21,18 +21,6 @@ function VideoComments() {
             return next;
         });
     };
-    /*useEffect(() => {
-        async function fetchVideoComments() {
-            try {
-                const response = await fetch(apiUrl + 'p/' + postId+`/c/?p=${encodeURIComponent(p)}&s=${encodeURIComponent(s)}`);
-                const data = await response.json();
-                setContent(data.content);
-            } catch (error) {
-                console.error("Error fetching user:", error);
-            }
-        }
-        fetchVideoComments();
-    }, [p,s]);*/
 
     useEffect(() => {
         if (modal.status){
@@ -53,6 +41,8 @@ function VideoComments() {
             if (data.status.includes('200')){
                 setContent(prev => ({
                     ...prev,
+                    totalElements: content.totalElements-1,
+                    totalPages: Math.ceil((content.totalElements-1)/content.size),
                     content: prev.content.filter(item => item.id !== id)
                 }));
             }
