@@ -13,6 +13,15 @@
             z-index: 2;
             color: var(--bs-secondary-color);
         }
+        #send-code {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            z-index: 2;
+            color: var(--bs-secondary-color);
+        }
         figure img {
             width: 120px;
             height: 120px;
@@ -94,11 +103,23 @@
 
                 </div>
             </div>
+            <div class="mb-3 text-start" id="react-verify-code">
+                <div class="mt-0 mb-2 bg-body-secondary rounded" style="width:100%; height:36px">
+
+                </div>
+                <div class="mt-0 mb-2 bg-body-secondary rounded" style="width:100%; height:36px">
+
+                </div>
+                <div id="codeHelpBlock" class="form-text text-danger text-center">
+
+                </div>
+            </div>
             <button class="btn btn-primary btn-lg mt-2" type="button" onclick="sendForm(event)"><i class="bi bi-box-arrow-in-right"></i> Sign Up</button>
             <br>
         </form>
         <a class="text-secondary text-decoration-none fs-6 d-table ms-auto me-auto mt-3" href="/login">I have an account</a>
     </div>
+    <script type="module" src="http://localhost:5173/src/verify.jsx"></script>
 </div>
 <script th:inline="javascript" layout:fragment="script">
     const error = /*[[${res.status}]]*/ 'None';
@@ -106,6 +127,8 @@
     const loginInput = document.getElementById('username');
     const emailInput = document.getElementById('usermail');
     const togglePasswordButton = document.getElementById('toggle-password');
+    let code = document.getElementById('code');
+    let codeHelp = document.getElementById('codeHelpBlock');
     document.addEventListener('DOMContentLoaded', function () {
         const passwordHelpBlock = document.getElementById('passwordHelpBlock');
         const loginHelpBlock = document.getElementById('loginHelpBlock');
@@ -118,6 +141,8 @@
             passwordHelpBlock.textContent = 'Invalid username, email or password!';
             passwordHelpBlock.classList.remove('text-success');
             passwordHelpBlock.classList.add('text-danger');
+            codeHelp.classList.add('text-danger');
+            codeHelp.innerText = 'Or invalid code';
             togglePasswordButton.classList.add('me-3');
         }
         togglePasswordButton.addEventListener('click', function () {
@@ -261,26 +286,38 @@
     function sendForm(event) {
         event.preventDefault();
         let should_we = false;
-        if (loginInput.value && passwordInput.value && emailInput.value) {
-            if (/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/.test(passwordInput.value)) {
-                if (/^[a-zA-Z0-9._-]{1,50}$/.test(loginInput.value)) {
-                    if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(emailInput.value)) {
-                        should_we = true;
-                    }else{
-                        emailInput.classList.add('is-invalid');
+        code = document.getElementById('code');
+        codeHelp = document.getElementById('codeHelpBlock');
+        if (code && code.value && /^[0-9]{6}$/.test(code.value)) {
+            if (loginInput.value && passwordInput.value && emailInput.value) {
+                if (/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/.test(passwordInput.value)) {
+                    if (/^[a-zA-Z0-9._-]{1,50}$/.test(loginInput.value)) {
+                        if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(emailInput.value)) {
+                            should_we = true;
+                        } else {
+                            emailInput.classList.add('is-invalid');
+                        }
+                    } else {
+                        loginInput.classList.add('is-invalid');
                     }
                 } else {
-                    loginInput.classList.add('is-invalid');
+                    passwordInput.classList.add('is-invalid');
+                    togglePasswordButton.classList.add('me-3');
                 }
             } else {
+                loginInput.classList.add('is-invalid');
                 passwordInput.classList.add('is-invalid');
+                emailInput.classList.add('is-invalid');
                 togglePasswordButton.classList.add('me-3');
             }
-        } else {
-            loginInput.classList.add('is-invalid');
-            passwordInput.classList.add('is-invalid');
-            emailInput.classList.add('is-invalid');
-            togglePasswordButton.classList.add('me-3');
+        }else{
+            if (codeHelp){
+                if (code){
+                    codeHelp.innerText = "Please enter a valid code";
+                }else {
+                    codeHelp.innerText = "Authentication service is currently unavailable. Please try again later!";
+                }
+            }
         }
         if (should_we) {
             document.getElementById("authForm").requestSubmit();

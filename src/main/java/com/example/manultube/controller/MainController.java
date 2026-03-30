@@ -9,12 +9,8 @@ import com.example.manultube.dto.User.UserLoginDTO;
 import com.example.manultube.dto.User.UserRegisterDTO;
 import com.example.manultube.dto.User.UserResponseDTO;
 import com.example.manultube.model.Page;
-import com.example.manultube.model.Rating;
 import com.example.manultube.model.TypicalResponse;
-import com.example.manultube.service.CookieService;
-import com.example.manultube.service.PostService;
-import com.example.manultube.service.SessionService;
-import com.example.manultube.service.UserService;
+import com.example.manultube.service.*;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,12 +25,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -47,12 +40,14 @@ public class MainController {
     private final SessionService sessionService;
     private final CookieService cookieService;
     private final PythonClient pythonClient;
-    public MainController(UserService userService, PostService postService, SessionService sessionService, CookieService cookieService, PythonClient pythonClient) {
+    private final VerificationService verificationService;
+    public MainController(UserService userService, PostService postService, SessionService sessionService, CookieService cookieService, PythonClient pythonClient, VerificationService verificationService) {
         this.userService = userService;
         this.postService = postService;
         this.sessionService = sessionService;
         this.cookieService = cookieService;
         this.pythonClient = pythonClient;
+        this.verificationService = verificationService;
     }
     private Boolean validateMimeImage(Path file) throws IOException {
         Tika tika = new Tika();
@@ -165,13 +160,15 @@ public class MainController {
         if (createdUser == null) {
             res.setStatus(HttpStatus.UNAUTHORIZED);
         }else {
-            res.setStatus(HttpStatus.OK);
-            res.setContent(createdUser);
-            Map<String, Object> userMap = new HashMap<>();
-            userMap.put("id", createdUser.getId());
-            userMap.put("name", createdUser.getUsername());
-            res.setCurrentUser(userMap);
-            createTokenAndRemovePrevious(response, token, spec_cookie, createdUser);
+            if (verificationService.verifyCode(createdUser.getUsermail(), user.getCode())) {
+                res.setStatus(HttpStatus.OK);
+                res.setContent(createdUser);
+                Map<String, Object> userMap = new HashMap<>();
+                userMap.put("id", createdUser.getId());
+                userMap.put("name", createdUser.getUsername());
+                res.setCurrentUser(userMap);
+                createTokenAndRemovePrevious(response, token, spec_cookie, createdUser);
+            }
         }
         res.setParams(Map.of("theme", theme));
         if (res.getStatus() == HttpStatus.OK) {
@@ -242,26 +239,28 @@ public class MainController {
         if (createdUser == null) {
             res.setStatus(HttpStatus.BAD_REQUEST);
         }else {
-            res.setStatus(HttpStatus.OK);
-            res.setContent(createdUser);
-            Map<String, Object> userMap = new HashMap<>();
-            userMap.put("id", createdUser.getId());
-            userMap.put("name", createdUser.getUsername());
-            res.setCurrentUser(userMap);
-            if (file!=null && !file.isEmpty() && file.getSize()<=5L*1000*1000) {
-                try {
-                    Path tempFile = Files.createTempFile("upload-", ".bin");
-                    try (InputStream in = file.getInputStream()) {
-                        Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            if (verificationService.verifyCode(createdUser.getUsermail(), user.getCode())) {
+                res.setStatus(HttpStatus.OK);
+                res.setContent(createdUser);
+                Map<String, Object> userMap = new HashMap<>();
+                userMap.put("id", createdUser.getId());
+                userMap.put("name", createdUser.getUsername());
+                res.setCurrentUser(userMap);
+                if (file != null && !file.isEmpty() && file.getSize() <= 5L * 1000 * 1000) {
+                    try {
+                        Path tempFile = Files.createTempFile("upload-", ".bin");
+                        try (InputStream in = file.getInputStream()) {
+                            Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                        Boolean status = validateMimeImage(tempFile);
+                        if (status) {
+                            pythonClient.processImage(tempFile, createdUser.getId());
+                        }
+                    } catch (IOException ignored) {
                     }
-                    Boolean status = validateMimeImage(tempFile);
-                    if (status) {
-                        pythonClient.processImage(tempFile, createdUser.getId());
-                    }
-                }catch (IOException ignored){
                 }
+                createTokenAndRemovePrevious(response, token, spec_cookie, createdUser);
             }
-            createTokenAndRemovePrevious(response, token, spec_cookie, createdUser);
         }
         res.setParams(Map.of("theme", theme));
         if (res.getStatus() == HttpStatus.OK) {

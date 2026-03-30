@@ -144,11 +144,12 @@ function VideoComments() {
                                 <div className="d-flex align-items-center">
                                     <a className="text-body"
                                        href={`/u/${comment.userId}`}>
-                                        <img className="rounded-circle object-fit-cover text-body"
+                                        <img className={`rounded-circle object-fit-cover text-body ${badImages.has(comment.id) ? "d-none" : ""}`}
                                              style={{"width": "36px", "height": "36px"}}
                                              src={`/media/u/${comment.userId}`}
                                              onError={() => handleImageError(comment.id)}/>
-                                        <i className="bi bi-person-circle d-none" style={{"fontSize": "36px"}}></i>
+                                        <i className={`bi bi-person-circle ${badImages.has(comment.id) ? "" : "d-none"}`}
+                                           style={{"fontSize": "36px"}}></i>
                                     </a>
                                     <div className="ms-3 d-flex flex-column">
                                         <a href={`/u/${comment.userId}`}

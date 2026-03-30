@@ -140,7 +140,7 @@ function Video() {
             }
         }
         if (name==="description"){
-            if (!(/.{0,2000}/.test(value))) {
+            if (value.length>2000) {
                 error = 'Unvalid description';
             }
         }
@@ -172,7 +172,7 @@ function Video() {
     const handleSubmit = async () => {
         let should_we = false;
         if (/^.{1,100}$/.test(formData.title)) {
-            if (/.{0,2000}/.test(formData.description)) {
+            if (formData.description.length<=2000) {
                 should_we = true;
             }else{
                 setErrors(prev => ({

@@ -6,11 +6,12 @@ import com.example.manultube.dto.Session.SessionResponseDTO;
 import com.example.manultube.dto.User.UserLoginDTO;
 import com.example.manultube.dto.User.UserRegisterDTO;
 import com.example.manultube.dto.User.UserResponseDTO;
-import com.example.manultube.dto.User.UserUpdateDTO;
 import com.example.manultube.model.TypicalResponse;
+import com.example.manultube.model.User;
 import com.example.manultube.service.CookieService;
 import com.example.manultube.service.SessionService;
 import com.example.manultube.service.UserService;
+import com.example.manultube.service.VerificationService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,12 +25,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -41,11 +39,13 @@ public class APIController {
     private final SessionService sessionService;
     private final CookieService cookieService;
     private final PythonClient pythonClient;
-    public APIController(UserService userService, SessionService sessionService, CookieService cookieService, PythonClient pythonClient) {
+    private final VerificationService verificationService;
+    public APIController(UserService userService, SessionService sessionService, CookieService cookieService, PythonClient pythonClient, VerificationService verificationService) {
         this.userService = userService;
         this.sessionService = sessionService;
         this.cookieService = cookieService;
         this.pythonClient = pythonClient;
+        this.verificationService = verificationService;
     }
     private Boolean validateMimeImage(Path file) throws IOException {
         Tika tika = new Tika();
@@ -80,13 +80,17 @@ public class APIController {
             res.setStatus(HttpStatus.UNAUTHORIZED);
             return ResponseEntity.status(res.getStatus()).body(res);
         }else {
-            res.setStatus(HttpStatus.OK);
-            res.setContent(createdUser);
-            Map<String, Object> userMap = new HashMap<>();
-            userMap.put("id", createdUser.getId());
-            userMap.put("name", createdUser.getUsername());
-            res.setCurrentUser(userMap);
-            return createTokenAndRemovePrevious(res, response, token, spec_cookie, createdUser);
+            if (verificationService.verifyCode(createdUser.getUsermail(), user.getCode())) {
+                res.setStatus(HttpStatus.OK);
+                res.setContent(createdUser);
+                Map<String, Object> userMap = new HashMap<>();
+                userMap.put("id", createdUser.getId());
+                userMap.put("name", createdUser.getUsername());
+                res.setCurrentUser(userMap);
+                return createTokenAndRemovePrevious(res, response, token, spec_cookie, createdUser);
+            }
+            res.setStatus(HttpStatus.UNAUTHORIZED);
+            return ResponseEntity.status(res.getStatus()).body(res);
         }
     }
 
@@ -120,26 +124,30 @@ public class APIController {
             res.setStatus(HttpStatus.BAD_REQUEST);
             return ResponseEntity.status(res.getStatus()).body(res);
         }else {
-            res.setStatus(HttpStatus.OK);
-            res.setContent(createdUser);
-            Map<String, Object> userMap = new HashMap<>();
-            userMap.put("id", createdUser.getId());
-            userMap.put("name", createdUser.getUsername());
-            res.setCurrentUser(userMap);
-            if (file!=null && !file.isEmpty() && file.getSize()<=5L*1000*1000) {
-                try {
-                    Path tempFile = Files.createTempFile("upload-", ".bin");
-                    try (InputStream in = file.getInputStream()) {
-                        Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            if (verificationService.verifyCode(createdUser.getUsermail(), user.getCode())) {
+                res.setStatus(HttpStatus.OK);
+                res.setContent(createdUser);
+                Map<String, Object> userMap = new HashMap<>();
+                userMap.put("id", createdUser.getId());
+                userMap.put("name", createdUser.getUsername());
+                res.setCurrentUser(userMap);
+                if (file != null && !file.isEmpty() && file.getSize() <= 5L * 1000 * 1000) {
+                    try {
+                        Path tempFile = Files.createTempFile("upload-", ".bin");
+                        try (InputStream in = file.getInputStream()) {
+                            Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                        Boolean status = validateMimeImage(tempFile);
+                        if (status) {
+                            pythonClient.processImage(tempFile, createdUser.getId());
+                        }
+                    } catch (IOException ignored) {
                     }
-                    Boolean status = validateMimeImage(tempFile);
-                    if (status) {
-                        pythonClient.processImage(tempFile, createdUser.getId());
-                    }
-                }catch (IOException ignored){
                 }
+                return createTokenAndRemovePrevious(res, response, token, spec_cookie, createdUser);
             }
-            return createTokenAndRemovePrevious(res, response, token, spec_cookie, createdUser);
+            res.setStatus(HttpStatus.UNAUTHORIZED);
+            return ResponseEntity.status(res.getStatus()).body(res);
         }
     }
 
@@ -157,6 +165,41 @@ public class APIController {
             }
         }
         res.setStatus(HttpStatus.OK);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    @PostMapping({"/code","/code/"})
+    public ResponseEntity<TypicalResponse<UserResponseDTO>> createCode(@RequestBody User reqUser, HttpServletRequest request, HttpServletResponse response) {
+        TypicalResponse<UserResponseDTO> res = new TypicalResponse<>();
+
+        Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
+        String token = (String) cookieMap.get("token");
+        Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
+        if (token != null) {
+            UserResponseDTO user = userService.selectUserByToken(token);
+            if (user != null) {
+                Map<String, Object> userMap = new HashMap<>();
+                userMap.put("id", user.getId());
+                userMap.put("name", user.getUsername());
+                res.setCurrentUser(userMap);
+            }else{
+                response.addCookie(cookieService.deleteCookie(spec_cookie));
+            }
+        }
+        if (reqUser != null && reqUser.getUsermail() != null && userService.selectUserByNameOrEmail(reqUser.getUsermail())==null) {
+            verificationService.sendVerificationCode(reqUser.getUsermail());
+            res.setStatus(HttpStatus.OK);
+        }else if (reqUser != null && reqUser.getUsername() != null){
+            User selectedUser = userService.selectUserByNameOrEmail(reqUser.getUsername());
+            if (selectedUser != null) {
+                verificationService.sendVerificationCode(selectedUser.getUsermail());
+                res.setStatus(HttpStatus.OK);
+            }else{
+                res.setStatus(HttpStatus.BAD_REQUEST);
+            }
+        }else{
+            res.setStatus(HttpStatus.BAD_REQUEST);
+        }
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 }

@@ -69,7 +69,11 @@ public class UserService {
         return toDto(userRepository.getUserById(id));
     }
     public User selectUserByNameOrEmail(String name){
-        return userRepository.getUserByNameOrEmail(name);
+        try {
+            return userRepository.getUserByNameOrEmail(name);
+        }catch (EmptyResultDataAccessException e){
+            return null;
+        }
     }
     public UserResponseDTO selectUserByToken(String token){
         SessionResponseDTO session = sessionService.getSessionByToken(token);

@@ -15,6 +15,9 @@ public class UserRegisterDTO {
     @Size(max=89,message="Email cannot be more than 89 characters long.")
     @NotBlank
     private String usermail;
+    @Pattern(regexp = "^[0-9]{6}$",message="Invalid code.")
+    @NotBlank
+    private String code;
     public String getUsername() {
         return username;
     }
@@ -35,5 +38,13 @@ public class UserRegisterDTO {
     }
     public void setUserpass(String userpass) {
         this.userpass = userpass;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 }
