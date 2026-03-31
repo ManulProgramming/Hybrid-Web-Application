@@ -4,6 +4,7 @@ function ProfileVideo() {
     const apiUrl = import.meta.env.VITE_API_URL;
     const [content, setContent] = useState({});
     const [badImages, setBadImages] = useState(() => new Set());
+    const [badVideos, setBadVideos] = useState(() => new Set());
     const [p, setP] = useState("1");
     const [s, setS] = useState("16");
     const [f, setF] = useState("hot");
@@ -15,6 +16,13 @@ function ProfileVideo() {
             return next;
         });
     };
+    const handleVideoError = (id) => {
+        setBadVideos(prev => {
+            const next = new Set(prev);
+            next.add(id);
+            return next;
+        })
+    }
     useEffect(() => {
         async function fetchUserPosts() {
             try {
@@ -110,9 +118,10 @@ function ProfileVideo() {
                             <article className="video-card">
 
                                 <a href={`/p/${post.id}`} className="thumbnail-link text-body">
-                                    <img className="video-thumbnail"
+                                    <img className={`video-thumbnail ${badVideos.has(post.id) ? "d-none" : ""}`}
                                          src={`/media/t/${post.id}`}
-                                         onError={() => {this.src='/video_placeholder.jpg'}}/>
+                                         onError={() => handleVideoError(post.id)}/>
+                                    <img src="/video_placeholder.jpg" className={`video-thumbnail ${badVideos.has(post.id) ? "" : "d-none"}`} />
                                 </a>
 
                                 <div className="video-info d-flex row mt-2">
