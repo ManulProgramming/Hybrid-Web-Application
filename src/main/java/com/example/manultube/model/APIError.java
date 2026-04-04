@@ -1,10 +1,14 @@
 package com.example.manultube.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
+@Setter
+@Getter
 public class APIError {
     private HttpStatus status;
     private String message;
@@ -16,29 +20,5 @@ public class APIError {
         this.timestamp = LocalDateTime.now();
         this.errors = errors;
     }
-    public HttpStatus getStatus() {
-        return status;
-    }
-    public String getMessage() {
-        return message;
-    }
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-    public Map<String, String> getErrors() {
-        return errors;
-    }
 
-    public void setStatus(HttpStatus status) {
-        this.status = status;
-    }
-    public void setMessage(String message) {
-        this.message = message;
-    }
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
-    public void setErrors(Map<String, String> errors) {
-        this.errors = errors;
-    }
 }

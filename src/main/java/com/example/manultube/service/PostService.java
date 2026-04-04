@@ -1,68 +1,84 @@
 package com.example.manultube.service;
 
+import com.example.manultube.dto.Comment.CommentRequestDTO;
+import com.example.manultube.dto.Comment.CommentResponseDTO;
 import com.example.manultube.dto.Post.PostRequestDTO;
 import com.example.manultube.dto.Post.PostResponseDTO;
 import com.example.manultube.dto.Post.PostUpdateDTO;
-import com.example.manultube.model.Comment;
-import com.example.manultube.model.Page;
-import com.example.manultube.model.Post;
-import com.example.manultube.model.Rating;
+import com.example.manultube.dto.Rating.RatingRequestDTO;
+import com.example.manultube.dto.Rating.RatingResponseDTO;
+import com.example.manultube.mapper.CommentMapper;
+import com.example.manultube.mapper.PostMapper;
+import com.example.manultube.mapper.RatingMapper;
+import com.example.manultube.model.*;
+import com.example.manultube.mapper.PageMapper;
+import com.example.manultube.repository.CommentRepository;
 import com.example.manultube.repository.PostRepository;
+import com.example.manultube.repository.RatingRepository;
+import com.example.manultube.repository.UserRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Pageable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class PostService {
     private final PostRepository postRepository;
+    private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
+    private final RatingRepository ratingRepository;
     private static final Path POST_DIR = Paths.get("uploads/p").toAbsolutePath();
-    public PostService(PostRepository postRepository) {
+    public PostService(PostRepository postRepository, UserRepository userRepository, CommentRepository commentRepository, RatingRepository ratingRepository) {
         this.postRepository = postRepository;
-        postRepository.createTable();
-    }
-    private PostResponseDTO toDto(Post post) {
-        PostResponseDTO dto = new PostResponseDTO();
-        dto.setId(post.getId());
-        dto.setUserId(post.getUserId());
-        dto.setUsername(post.getUsername());
-        dto.setTitle(post.getTitle());
-        dto.setDescription(post.getDescription());
-        dto.setUpvotes(post.getUpvotes());
-        dto.setDownvotes(post.getDownvotes());
-        dto.setCreatedAt(post.getCreatedAt());
-        return dto;
+        this.userRepository = userRepository;
+        this.commentRepository = commentRepository;
+        this.ratingRepository = ratingRepository;
     }
     public Page<PostResponseDTO> getAll(Integer page, Integer size, String query, String sort) {
-        Page<Post> postPage = postRepository.getAllPosts(page, size, query, sort);
+        Pageable pageable = PageRequest.of(page-1, size);
+        String sorting;
+        if (Objects.equals(sort, "latest")){
+            sorting = "latest";
+        }else{
+            sorting = "hot";
+        }
+        org.springframework.data.domain.Page<Post> result =
+                postRepository.search(query, sorting, pageable);
 
-        List<PostResponseDTO> dtoList = postPage.getContent().stream().map(this::toDto).toList();
-        Page<PostResponseDTO> p = new Page<>();
-        p.setContent(dtoList);
-        p.setPage(postPage.getPage());
-        p.setSize(postPage.getSize());
-        p.setTotalElements(postPage.getTotalElements());
-        p.setTotalPages();
-        return p;
+        return PageMapper.toCustomPage(result, PostMapper::toDto);
     }
     public PostResponseDTO getById(Long id) {
-        return toDto(postRepository.getPostById(id));
+        Post post = postRepository.findById(id).orElse(null);
+        if (post == null) {
+            return null;
+        }
+        return PostMapper.toDto(post);
     }
     public Page<PostResponseDTO> getByUserId(Long UserId, Integer page, Integer size, String sort) {
-        Page<Post> postPage = postRepository.getPostsByUserId(UserId, page, size, sort);
+        Pageable pageable = Pageable.unpaged();
+        String sorting;
+        if (Objects.equals(sort, "latest")){
+            sorting = "latest";
+        }else{
+            sorting = "hot";
+        }
+        if (size!=null){
+            pageable = PageRequest.of(page-1, size);
+        }
 
-        List<PostResponseDTO> dtoList = postPage.getContent().stream().map(this::toDto).toList();
-        Page<PostResponseDTO> p = new Page<>();
-        p.setContent(dtoList);
-        p.setPage(postPage.getPage());
-        p.setSize(postPage.getSize());
-        p.setTotalElements(postPage.getTotalElements());
-        p.setTotalPages();
-        return p;
+        org.springframework.data.domain.Page<Post> result =
+                postRepository.findByUserId(UserId, sorting, pageable);
+
+        return PageMapper.toCustomPage(result, PostMapper::toDto);
     }
     public PostResponseDTO create(PostRequestDTO postRequestDTO) {
         Post post = new Post();
@@ -73,14 +89,15 @@ public class PostService {
         post.setUpvotes(0);
         post.setDownvotes(0);
         post.setCreatedAt(System.currentTimeMillis());
-        return toDto(postRepository.insertPost(post));
+        return PostMapper.toDto(postRepository.save(post));
     }
     public void update(Long id, PostUpdateDTO postUpdateDTO) {
-        Post post = new Post();
-        post.setTitle(postUpdateDTO.getTitle());
-        post.setDescription(postUpdateDTO.getDescription());
-        post.setId(id);
-        postRepository.updatePost(post);
+        Post post = postRepository.findById(id).orElse(null);
+        if (post != null) {
+            post.setTitle(postUpdateDTO.getTitle());
+            post.setDescription(postUpdateDTO.getDescription());
+            postRepository.save(post);
+        }
     }
     public void delete(Long id) {
         try {
@@ -88,8 +105,9 @@ public class PostService {
             Files.deleteIfExists(POST_DIR.resolve(id.toString()+".jpg"));
         }catch (IOException ignored){
         }
-        postRepository.deletePost(id);
+        postRepository.deleteById(id);
     }
+    @Transactional
     public void deleteAllPosts(Long userId) {
         List<Long> ids = getByUserId(userId, 0, null, "").getContent().stream().map(PostResponseDTO::getId).toList();
         for (Long postId : ids) {
@@ -101,71 +119,121 @@ public class PostService {
             }catch (IOException ignored){
             }
         }
-        postRepository.deletePostsForUserId(userId);
+        postRepository.deleteByUserId(userId);
     }
     public void updateRatingsForPosts() {
-        List<Map<String, Object>> current = postRepository.getCurrentRatings();
+        List<Map<String, Object>> current = ratingRepository.getRatingSummary();
         for (Map<String, Object> map : current) {
-            postRepository.updateUpvotesAndDownvotesForPost((Long) map.get("postId"), (Long) map.get("upvotes"), (Long) map.get("downvotes"));
+            Post post = postRepository.findById((Long) map.get("postId")).orElse(null);
+            if (post != null) {
+                post.setUpvotes((Integer) map.get("upvotes"));
+                post.setDownvotes((Integer) map.get("downvotes"));
+                postRepository.save(post);
+            }
         }
     }
-    public Rating getRating(Long userId, Long postId) {
-        return postRepository.getRating(userId,postId);
+    public RatingResponseDTO getRating(Long userId, Long postId) {
+        Rating rating = ratingRepository.findByUser_IdAndPost_Id(userId, postId).orElse(null);
+        if (rating != null) {
+            return RatingMapper.toDto(rating);
+        }
+        return null;
     }
-    public Rating changeRating(Rating rating) {
-        Rating currentRating = getRating(rating.getUserId(),rating.getPostId());
+    @Transactional
+    public RatingResponseDTO changeRating(RatingRequestDTO rating) {
+        User user = userRepository.findById(rating.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Post post = postRepository.findById(rating.getPostId())
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+        RatingResponseDTO currentRating = getRating(user.getId(), post.getId());
         if (currentRating == null) {
-            currentRating = postRepository.createRating(rating);
-            if (rating.getRating()){
-                postRepository.changeUpvote(rating.getPostId(),1);
-            }else{
-                postRepository.changeDownvote(rating.getPostId(),1);
+            Rating r = new Rating();
+            r.setUser(user);
+            r.setPost(post);
+            r.setRating(rating.getRating());
+            currentRating = RatingMapper.toDto(ratingRepository.save(r));
+            if (rating.getRating()) {
+                post.setUpvotes(post.getUpvotes() + 1);
+            } else {
+                post.setDownvotes(post.getDownvotes() + 1);
             }
+            postRepository.save(post);
         }else{
             if (currentRating.getRating() == rating.getRating()) {
-                postRepository.deleteRating(rating.getUserId(),rating.getPostId());
-                if (rating.getRating()){
-                    postRepository.changeUpvote(rating.getPostId(),-1);
-                }else{
-                    postRepository.changeDownvote(rating.getPostId(),-1);
+                ratingRepository.deleteByUser_IdAndPost_Id(user.getId(), post.getId());
+                if (rating.getRating()) {
+                    post.setUpvotes(post.getUpvotes() - 1);
+                } else {
+                    post.setDownvotes(post.getDownvotes() - 1);
                 }
+                postRepository.save(post);
                 currentRating = null;
             }else{
-                currentRating = postRepository.updateRating(rating);
-                if (rating.getRating()){
-                    postRepository.changeUpvote(rating.getPostId(),1);
-                    postRepository.changeDownvote(rating.getPostId(),-1);
-                }else{
-                    postRepository.changeDownvote(rating.getPostId(),1);
-                    postRepository.changeUpvote(rating.getPostId(),-1);
+                Rating r = new Rating();
+                r.setId(currentRating.getId());
+                r.setUser(user);
+                r.setPost(post);
+                r.setRating(rating.getRating());
+                currentRating = RatingMapper.toDto(ratingRepository.save(r));
+                if (rating.getRating()) {
+                    post.setUpvotes(post.getUpvotes() + 1);
+                    post.setDownvotes(post.getDownvotes() - 1);
+                } else {
+                    post.setUpvotes(post.getUpvotes() - 1);
+                    post.setDownvotes(post.getDownvotes() + 1);
                 }
+                postRepository.save(post);
             }
         }
-        return currentRating;
+        if (currentRating != null) {
+            return currentRating;
+        }
+        return null;
     }
     public void deleteRatingsForPost(Long postId){
-        postRepository.deleteRatingForPost(postId);
+        ratingRepository.deleteByPost_Id(postId);
     }
+    @Transactional
     public void deleteRatingsForUser(Long userId){
-        postRepository.deleteRatingForUser(userId);
+        ratingRepository.deleteByUser_Id(userId);
     }
-    public Comment createComment(Comment comment) {
-        return postRepository.insertComment(comment);
+    public CommentResponseDTO createComment(CommentRequestDTO comment) {
+        User user = userRepository.findById(comment.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Post post = postRepository.findById(comment.getPostId())
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+        Comment com = new Comment();
+        com.setUser(user);
+        com.setPost(post);
+        com.setComment(comment.getComment());
+        return CommentMapper.toDto(commentRepository.save(com));
     }
-    public Page<Comment> getComments(Long pageId, Integer page, Integer size) {
-        return postRepository.getComments(pageId, page, size);
+    public Page<CommentResponseDTO> getComments(Long pageId, Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        org.springframework.data.domain.Page<Comment> result =
+                commentRepository.findByPostId(pageId, pageable);
+        return PageMapper.toCustomPage(result, CommentMapper::toDto);
     }
-    public Comment getCommentById(Long commentId) {
-        return postRepository.getCommentById(commentId);
+    public CommentResponseDTO getCommentById(Long commentId) {
+        Comment comment = commentRepository.findById(commentId).orElse(null);
+        if (comment != null) {
+            return CommentMapper.toDto(comment);
+        }
+        return null;
     }
 
     public void deleteComment(Long commentId) {
-        postRepository.deleteComment(commentId);
+        commentRepository.deleteById(commentId);
     }
+    @Transactional
     public void deleteAllCommentsByUser(Long userId) {
-        postRepository.deleteCommentsForUserId(userId);
+        commentRepository.deleteByUserId(userId);
     }
+    @Transactional
     public void deleteAllCommentsByPost(Long postId) {
-        postRepository.deleteCommentsForPostId(postId);
+        commentRepository.deleteByPostId(postId);
     }
 }

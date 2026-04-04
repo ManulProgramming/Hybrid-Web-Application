@@ -213,15 +213,19 @@ public class UserController {
         String token = (String) cookieMap.get("token");
         Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
         if (token!=null){
+            System.out.println("Token exists");
             UserResponseDTO userResponseDTO = userService.selectUserByToken(token);
             if (userResponseDTO == null) {
+                System.out.println("User has expired token or was not found");
                 response.addCookie(cookieService.deleteCookie(spec_cookie));
             }else{
+                System.out.println("User was found");
                 Map<String, Object> userMap = new HashMap<>();
                 userMap.put("id", userResponseDTO.getId());
                 userMap.put("name", userResponseDTO.getUsername());
                 res.setCurrentUser(userMap);
                 if (id.equals(userResponseDTO.getId()) && userService.doesPassMatch(user.getOldUserpass(),userResponseDTO.getId())) {
+                    System.out.println("ID and Password matched");
                     sessionService.deleteAllSessions(id);
                     postService.deleteAllCommentsByUser(id);
                     postService.deleteRatingsForUser(id);

@@ -13,9 +13,7 @@ class AllServices {
     private final PostRepository postRepository;
     public AllServices(UserRepository userRepository, PostRepository postRepository) {
         this.userRepository = userRepository;
-        userRepository.createTable();
         this.postRepository = postRepository;
-        postRepository.createTable();
     }
 }
 

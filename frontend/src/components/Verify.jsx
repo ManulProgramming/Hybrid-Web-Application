@@ -11,6 +11,7 @@ function Verify(){
 
         if (!(/^[0-9]{6}$/.test(value))) {
             error = 'Invalid code';
+            setSuccess('');
         }
         return error;
     };
@@ -36,8 +37,10 @@ function Verify(){
                     body: JSON.stringify({username: username.value})
                 });
                 setSuccess("Check your mail");
+                setError("");
             } catch (err) {
                 setError("This user does not exist");
+                setSuccess("");
             }
         }else if (usermail && usermail.value && /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(usermail.value)){
             try {
@@ -49,13 +52,17 @@ function Verify(){
                     body: JSON.stringify({usermail: usermail.value})
                 });
                 setSuccess("Check your mail");
+                setError("");
             } catch (err) {
                 setError("This email is already in use");
+                setSuccess("");
             }
         }else if (username){
             setError("Please enter a valid username");
+            setSuccess("");
         }else{
             setError("Please enter a valid email address");
+            setSuccess("");
         }
     }
 

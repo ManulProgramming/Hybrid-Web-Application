@@ -3,7 +3,11 @@ package com.example.manultube.dto.User;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 public class UserRegisterDTO {
     @Pattern(regexp = "^[a-zA-Z0-9._-]{1,50}$", message = "Invalid username. Username can only contain lowercase and uppercase characters, dot, underscore and dash and be no more than 50 characters long")
     @NotBlank
@@ -18,33 +22,5 @@ public class UserRegisterDTO {
     @Pattern(regexp = "^[0-9]{6}$",message="Invalid code.")
     @NotBlank
     private String code;
-    public String getUsername() {
-        return username;
-    }
-    public void setUsername(String username) {
-        this.username = username;
-    }
 
-    public String getUsermail() {
-        return usermail;
-    }
-
-    public void setUsermail(String usermail) {
-        this.usermail = usermail;
-    }
-
-    public String getUserpass() {
-        return userpass;
-    }
-    public void setUserpass(String userpass) {
-        this.userpass = userpass;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
 }

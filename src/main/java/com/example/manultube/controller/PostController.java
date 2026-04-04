@@ -1,14 +1,15 @@
 package com.example.manultube.controller;
 
 import com.example.manultube.component.PythonClient;
+import com.example.manultube.dto.Comment.CommentRequestDTO;
+import com.example.manultube.dto.Comment.CommentResponseDTO;
 import com.example.manultube.dto.Post.PostResponseDTO;
 import com.example.manultube.dto.Post.PostRequestDTO;
 import com.example.manultube.dto.Post.PostUpdateDTO;
+import com.example.manultube.dto.Rating.RatingRequestDTO;
+import com.example.manultube.dto.Rating.RatingResponseDTO;
 import com.example.manultube.dto.User.UserResponseDTO;
-import com.example.manultube.model.Comment;
-import com.example.manultube.model.Page;
-import com.example.manultube.model.Rating;
-import com.example.manultube.model.TypicalResponse;
+import com.example.manultube.model.*;
 import com.example.manultube.service.CookieService;
 import com.example.manultube.service.PostService;
 import com.example.manultube.service.UserService;
@@ -116,8 +117,8 @@ public class PostController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
     @GetMapping({"/{id}/r","/{id}/r/"})
-    public ResponseEntity<TypicalResponse<Rating>> getUserPostRating(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id){
-        TypicalResponse<Rating> res = new TypicalResponse<>();
+    public ResponseEntity<TypicalResponse<RatingResponseDTO>> getUserPostRating(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id){
+        TypicalResponse<RatingResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
         String token = (String) cookieMap.get("token");
         Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
@@ -129,7 +130,7 @@ public class PostController {
                 userMap.put("name", user.getUsername());
                 res.setCurrentUser(userMap);
                 res.setStatus(HttpStatus.OK);
-                res.setContent(postService.getRating(user.getId(), id));
+                res.setContent(postService.getRating(user.getId(),id));
                 return ResponseEntity.status(res.getStatus()).body(res);
             }else{
                 response.addCookie(cookieService.deleteCookie(spec_cookie));
@@ -139,8 +140,8 @@ public class PostController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
     @PostMapping({"/{id}/r","/{id}/r/"})
-    public ResponseEntity<TypicalResponse<Rating>> changeUserPostRating(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @RequestBody(required = true) Rating rating){
-        TypicalResponse<Rating> res = new TypicalResponse<>();
+    public ResponseEntity<TypicalResponse<RatingResponseDTO>> changeUserPostRating(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @RequestBody(required = true) RatingRequestDTO rating){
+        TypicalResponse<RatingResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
         String token = (String) cookieMap.get("token");
         Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
@@ -164,8 +165,8 @@ public class PostController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
     @GetMapping({"/{id}/c","/{id}/c/"})
-    public ResponseEntity<TypicalResponse<Page<Comment>>> getComments(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @RequestParam(value="p", required = false, defaultValue = "1") Integer page, @RequestParam(value="s", required = false, defaultValue = "16") Integer size) {
-        TypicalResponse<Page<Comment>> res = new TypicalResponse<>();
+    public ResponseEntity<TypicalResponse<Page<CommentResponseDTO>>> getComments(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @RequestParam(value="p", required = false, defaultValue = "1") Integer page, @RequestParam(value="s", required = false, defaultValue = "16") Integer size) {
+        TypicalResponse<Page<CommentResponseDTO>> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
         String token = (String) cookieMap.get("token");
         Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
@@ -180,14 +181,14 @@ public class PostController {
                 response.addCookie(cookieService.deleteCookie(spec_cookie));
             }
         }
-        Page<Comment> posts = postService.getComments(id, page, size);
+        Page<CommentResponseDTO> posts = postService.getComments(id, page, size);
         res.setStatus(HttpStatus.OK);
         res.setContent(posts);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
     @PostMapping({"/{id}/c","/{id}/c/"})
-    public ResponseEntity<TypicalResponse<Comment>> createComments(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @Valid @RequestBody Comment comment) {
-        TypicalResponse<Comment> res = new TypicalResponse<>();
+    public ResponseEntity<TypicalResponse<CommentResponseDTO>> createComments(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @Valid @RequestBody CommentRequestDTO comment) {
+        TypicalResponse<CommentResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
         String token = (String) cookieMap.get("token");
         Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
@@ -201,7 +202,7 @@ public class PostController {
                 comment.setPostId(id);
                 comment.setUserId(user.getId());
                 comment.setUsername(user.getUsername());
-                Comment createdComment = postService.createComment(comment);
+                CommentResponseDTO createdComment = postService.createComment(comment);
                 if (createdComment == null) {
                     res.setStatus(HttpStatus.BAD_REQUEST);
                     return ResponseEntity.status(res.getStatus()).body(res);
@@ -217,8 +218,8 @@ public class PostController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
     @DeleteMapping({"/{postId}/c/{commentId}","/{postId}/c/{commentId}/"})
-    public ResponseEntity<TypicalResponse<Comment>> deleteComment(@PathVariable("postId") Long postId, @PathVariable("commentId") Long commentId, HttpServletRequest request, HttpServletResponse response) {
-        TypicalResponse<Comment> res = new TypicalResponse<>();
+    public ResponseEntity<TypicalResponse<CommentResponseDTO>> deleteComment(@PathVariable("postId") Long postId, @PathVariable("commentId") Long commentId, HttpServletRequest request, HttpServletResponse response) {
+        TypicalResponse<CommentResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
         String token = (String) cookieMap.get("token");
         Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
@@ -231,7 +232,7 @@ public class PostController {
                 userMap.put("id", user.getId());
                 userMap.put("name", user.getUsername());
                 res.setCurrentUser(userMap);
-                Comment comment = postService.getCommentById(commentId);
+                CommentResponseDTO comment = postService.getCommentById(commentId);
                 if (comment != null && comment.getPostId().equals(postId) && comment.getUserId().equals(user.getId())){
                     postService.deleteComment(commentId);
                     res.setStatus(HttpStatus.OK);

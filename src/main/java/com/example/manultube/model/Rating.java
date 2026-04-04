@@ -1,29 +1,28 @@
 package com.example.manultube.model;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Entity
+@Table(
+        name = "rating",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "post_id"})
+)
+@Getter @Setter
 public class Rating {
-    private Long userId;
-    private Long postId;
-    @NotBlank
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     private Boolean rating;
 
-    public Long getUserId() {
-        return userId;
-    }
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-    public Long getPostId() {
-        return postId;
-    }
-    public void setPostId(Long postId) {
-        this.postId = postId;
-    }
-    public Boolean getRating() {
-        return rating;
-    }
-    public void setRating(Boolean rating) {
-        this.rating = rating;
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
 }

@@ -1,11 +1,15 @@
 package com.example.manultube.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 
+@Setter
+@Getter
 @Document(collection = "verification_codes")
 public class VerificationCode {
     @Id
@@ -19,34 +23,4 @@ public class VerificationCode {
 
     private int attempts;
 
-    public String getId() {
-        return id;
-    }
-    public void setId(String id) {
-        this.id = id;
-    }
-    public String getEmail() {
-        return email;
-    }
-    public void setEmail(String email) {
-        this.email = email;
-    }
-    public String getCodeHash() {
-        return codeHash;
-    }
-    public void setCodeHash(String codeHash) {
-        this.codeHash = codeHash;
-    }
-    public Instant getExpiresAt() {
-        return expiresAt;
-    }
-    public void setExpiresAt(Instant expiresAt) {
-        this.expiresAt = expiresAt;
-    }
-    public int getAttempts() {
-        return attempts;
-    }
-    public void setAttempts(int attempts) {
-        this.attempts = attempts;
-    }
 }
