@@ -149,7 +149,7 @@ class UserIntegrationTest {
     }
 
     //Returns 401
-    /*@Test
+    @Test
     void shouldDeleteUser() throws Exception {
         User user = new User();
         user.setUsername("john");
@@ -159,13 +159,13 @@ class UserIntegrationTest {
         user = userRepository.save(user);
 
         Map<String, Object> cookies = new HashMap<>();
-        cookies.put("JWT", "valid");
+        cookies.put("token", "valid");
 
         when(cookieService.getCookie(any())).thenReturn(cookies);
 
         SessionResponseDTO session = new SessionResponseDTO();
         session.setUserId(user.getId());
-        session.setExpiresIn(System.currentTimeMillis() + 100000000);
+        session.setExpiresIn(System.currentTimeMillis() + 10000);
 
         when(sessionService.getSessionByToken("valid"))
                 .thenReturn(session);
@@ -182,5 +182,5 @@ class UserIntegrationTest {
                 .andExpect(status().isOk());
 
         assertFalse(userRepository.findById(user.getId()).isPresent());
-    }*/
+    }
 }

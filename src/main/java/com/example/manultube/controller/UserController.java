@@ -30,10 +30,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/u")
 public class UserController {
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
     private final PostService postService;
     private final SessionService sessionService;
@@ -68,6 +71,7 @@ public class UserController {
     }
     @GetMapping({"/{id}","/{id}/"})
     public ResponseEntity<TypicalResponse<UserResponseDTO>> getUserById(HttpServletRequest request, HttpServletResponse response, @PathVariable Long id) {
+        logger.info("GET /api/u/{} called", id);
         TypicalResponse<UserResponseDTO> res = new TypicalResponse<>();
 
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
@@ -100,6 +104,7 @@ public class UserController {
 
     @GetMapping({"/{id}/p","/{id}/p/"})
     public ResponseEntity<TypicalResponse<Page<PostResponseDTO>>> getUserPosts(HttpServletRequest request, HttpServletResponse response, @PathVariable Long id, @RequestParam(value="p", required = false, defaultValue = "1") Integer page, @RequestParam(value="s", required = false, defaultValue = "16") Integer size, @RequestParam(value="f", required = false, defaultValue = "hot") String sort) {
+        logger.info("GET /api/u/{}/p called", id);
         TypicalResponse<Page<PostResponseDTO>> res = new TypicalResponse<>();
 
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
@@ -124,14 +129,17 @@ public class UserController {
 
     @PutMapping({"/{id}","/{id}/"})
     public ResponseEntity<TypicalResponse<UserResponseDTO>> putUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
+        logger.info("PUT /api/u/{} called", id);
         return updateUser(id, user, request, response);
     }
     @PatchMapping({"/{id}","/{id}/"})
     public ResponseEntity<TypicalResponse<UserResponseDTO>> patchUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
+        logger.info("PATCH /api/u/{} called", id);
         return updateUser(id, user, request, response);
     }
     @PatchMapping({"/{id}/a","/{id}/a/"})
     public ResponseEntity<TypicalResponse<UserResponseDTO>> patchUserAvatar(@PathVariable Long id, @RequestParam(value = "file", required = true) MultipartFile file, HttpServletRequest request, HttpServletResponse response) {
+        logger.info("PATCH /api/u/{}/a called", id);
         TypicalResponse<UserResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
         String token = (String) cookieMap.get("token");
@@ -156,7 +164,8 @@ public class UserController {
                             if (status) {
                                 pythonClient.processImage(tempFile, userResponseDTO.getId());
                             }
-                        }catch (IOException ignored){
+                        }catch (IOException e){
+                            logger.warn("Failed to replace user avatar for id: {}", id, e);
                         }
                     }
                     res.setStatus(HttpStatus.OK);
@@ -202,43 +211,46 @@ public class UserController {
                 }
             }
         }
+        logger.warn("Attempted unauthorized update operation on User with id: {}", id);
         res.setStatus(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
     @DeleteMapping({"/{id}","/{id}/"})
     public ResponseEntity<TypicalResponse<UserResponseDTO>> deleteUser(@PathVariable Long id, @RequestBody @Valid UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
+        logger.info("DELETE /api/u/{} called", id);
         TypicalResponse<UserResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
         String token = (String) cookieMap.get("token");
         Cookie spec_cookie = (Cookie) cookieMap.get("spec_cookie");
         if (token!=null){
-            System.out.println("Token exists");
             UserResponseDTO userResponseDTO = userService.selectUserByToken(token);
             if (userResponseDTO == null) {
-                System.out.println("User has expired token or was not found");
                 response.addCookie(cookieService.deleteCookie(spec_cookie));
             }else{
-                System.out.println("User was found");
                 Map<String, Object> userMap = new HashMap<>();
                 userMap.put("id", userResponseDTO.getId());
                 userMap.put("name", userResponseDTO.getUsername());
                 res.setCurrentUser(userMap);
                 if (id.equals(userResponseDTO.getId()) && userService.doesPassMatch(user.getOldUserpass(),userResponseDTO.getId())) {
-                    System.out.println("ID and Password matched");
                     sessionService.deleteAllSessions(id);
                     postService.deleteAllCommentsByUser(id);
                     postService.deleteRatingsForUser(id);
                     postService.deleteAllPosts(id);
                     postService.updateRatingsForPosts();
                     userService.deleteUser(id);
-                    response.addCookie(cookieService.deleteCookie(spec_cookie));
+                    try {
+                        response.addCookie(cookieService.deleteCookie(spec_cookie));
+                    }catch (Exception ignored){
+                        logger.warn("Failed to delete cookie with token for User with id: {}", id);
+                    }
                     res.setStatus(HttpStatus.OK);
                     res.setCurrentUser(null);
                     return ResponseEntity.status(res.getStatus()).body(res);
                 }
             }
         }
+        logger.warn("Attempted unauthorized delete operation on User with id: {}", id);
         res.setStatus(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.status(res.getStatus()).body(res);
     }

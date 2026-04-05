@@ -17,9 +17,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class UserService {
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
     private final SessionService sessionService;
     private final Argon2PasswordEncoder encoder;
@@ -37,13 +40,17 @@ public class UserService {
         return dto;
     }
     public UserResponseDTO createUser(UserRegisterDTO userRegisterDTO){
+        logger.info("Attempting to create user with username: {}", userRegisterDTO.getUsername());
         User user = new User();
         user.setUsername(userRegisterDTO.getUsername());
         user.setUsermail(userRegisterDTO.getUsermail());
         user.setUserpass(encoder.encode(userRegisterDTO.getUserpass()));
         try {
-            return toDto(userRepository.save(user));
+            User saved = userRepository.save(user);
+            logger.info("User created successfully with id: {}", saved.getId());
+            return toDto(saved);
         }catch (DataIntegrityViolationException e){
+            logger.warn("User creation failed due to data integrity violation. Username/email may already exist: {}", userRegisterDTO.getUsername());
             return null;
         }
     }
@@ -55,14 +62,22 @@ public class UserService {
         return false;
     }
     public UserResponseDTO loginUser(UserLoginDTO userLoginDTO){
+        logger.info("Login attempt for: {}", userLoginDTO.getUsername());
         try {
             User selectedUser = selectUserByNameOrEmail(userLoginDTO.getUsername());
-            if (encoder.matches(userLoginDTO.getUserpass(), selectedUser.getUserpass())){
-                return toDto(selectedUser);
-            }else{
+            if (selectedUser == null) {
+                logger.warn("Login failed: user not found: {}", userLoginDTO.getUsername());
                 return null;
             }
-        }catch (EmptyResultDataAccessException e){
+            if (encoder.matches(userLoginDTO.getUserpass(), selectedUser.getUserpass())){
+                logger.info("Login successful for user id: {}", selectedUser.getId());
+                return toDto(selectedUser);
+            }else{
+                logger.warn("Login failed: incorrect password for user: {}", userLoginDTO.getUsername());
+                return null;
+            }
+        }catch (Exception e){
+            logger.error("Unexpected error during login for user: {}", userLoginDTO.getUsername(), e);
             return null;
         }
     }
@@ -93,15 +108,20 @@ public class UserService {
     }
     @Transactional
     public void deleteUser(Long id){
+        logger.info("Deleting user with id: {}", id);
         try {
             Files.deleteIfExists(USER_DIR.resolve(id.toString()));
-        }catch (IOException ignored){
+            logger.debug("User directory deleted for id: {}", id);
+        }catch (IOException e){
+            logger.warn("Failed to delete user directory for id: {}", id, e);
         }
         userRepository.deleteById(id);
+        logger.info("User deleted from database: {}", id);
     }
 
     @Transactional
     public void updateUser(Long id, UserUpdateDTO updated) {
+        logger.info("Updating user with id: {}", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -112,7 +132,7 @@ public class UserService {
             user.setUsermail(updated.getUsermail());
         }
         if (updated.getUserpass() != null) {
-            user.setUserpass(updated.getUserpass());
+            user.setUserpass(encoder.encode(updated.getUserpass()));
         }
 
         userRepository.save(user);
