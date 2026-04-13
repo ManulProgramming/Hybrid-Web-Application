@@ -1,0 +1,66 @@
+version: "3.9"
+
+secrets:
+  mail_username:
+    file: ./secrets/mail_username.txt
+  mail_password:
+    file: ./secrets/mail_password.txt
+
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_DB: manultube
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  mongo:
+    image: mongo:7
+    container_name: mongo
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app-network
+
+  fastapi:
+    build: ./fastapi
+    container_name: fastapi
+    volumes:
+      - shared-data:/app/shared
+    networks:
+      - app-network
+    ports:
+      - "8000:8000"
+
+  backend:
+    build: .
+    container_name: backend
+    depends_on:
+      - postgres
+      - mongo
+      - fastapi
+    env_file:
+      - ./backend/.env
+    volumes:
+      - shared-data:/app/shared
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    secrets:
+      - mail_username
+      - mail_password
+
+volumes:
+  postgres_data:
+  mongo_data:
+  shared-data:
+
+networks:
+  app-network:

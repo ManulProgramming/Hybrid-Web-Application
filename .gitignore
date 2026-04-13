@@ -1,33 +1,36 @@
 HELP.md
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
-.env
-uploads
-app.log
+backend/.gradle
+backend/build/
+!backend/gradle/wrapper/gradle-wrapper.jar
+!backend/**/src/main/**/build/
+!backend/**/src/test/**/build/
+backend/.env
+backend/uploads
+backend/app.log
+secrets
+secrets/*
 
 ### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
+backend/.apt_generated
+backend/.classpath
+backend/.factorypath
+backend/.project
+backend/.settings
+backend/.springBeans
+backend/.sts4-cache
+backend/bin/
+!backend/**/src/main/**/bin/
+!backend/**/src/test/**/bin/
 
 ### IntelliJ IDEA ###
+backend/.idea
+backend/*.iws
+backend/*.iml
+backend/*.ipr
+backend/out/
+!backend/**/src/main/**/out/
+!backend/**/src/test/**/out/
 .idea
-*.iws
-*.iml
-*.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
 
 ### NetBeans ###
 /nbproject/private/
@@ -39,10 +42,10 @@ out/
 ### VS Code ###
 .vscode/
 
-### External API (Python FastAPI) ###
-externalAPI/venv
+### External API (Python frontend) ###
+fastapi/venv
 
-### Frontend ###
+### frontend ###
 # Logs
 frontend/logs
 frontend/*.log

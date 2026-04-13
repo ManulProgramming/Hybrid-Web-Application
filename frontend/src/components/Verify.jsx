@@ -29,30 +29,43 @@ function Verify(){
         let usermail = document.getElementById("usermail");
         if (!(usermail) && username && username.value && /^([a-zA-Z0-9._-]{1,50}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/.test(username.value)){
             try {
-                await fetch(apiUrl+'code/', {
+                const res = await fetch(apiUrl+'code/', {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({username: username.value})
                 });
-                setSuccess("Check your mail");
-                setError("");
+                const data = await res.json();
+                if (data.status.includes('200')) {
+                    setSuccess("Check your mail");
+                    setError("");
+                }else{
+                    setError("This user does not exist");
+                    setSuccess("");
+                }
             } catch (err) {
                 setError("This user does not exist");
                 setSuccess("");
             }
         }else if (usermail && usermail.value && /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(usermail.value)){
             try {
-                await fetch(apiUrl+'code/', {
+                const res = await fetch(apiUrl+'code/', {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({usermail: usermail.value})
                 });
-                setSuccess("Check your mail");
-                setError("");
+                const data = await res.json();
+
+                if (data.status.includes('200')) {
+                    setSuccess("Check your mail");
+                    setError("");
+                }else{
+                    setError("This email is already in use");
+                    setSuccess("");
+                }
             } catch (err) {
                 setError("This email is already in use");
                 setSuccess("");
