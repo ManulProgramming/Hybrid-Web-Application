@@ -12,7 +12,7 @@ export const VideoCommentsProvider = ({ children }) => {
     useEffect(() => {
         async function fetchVideoComments() {
             try {
-                const response = await fetch(apiUrl + 'p/' + postId+`/c/?p=${encodeURIComponent(p)}&s=${encodeURIComponent(s)}`);
+                const response = await fetch(apiUrl + 'p/' + postId+`/c?p=${encodeURIComponent(p)}&s=${encodeURIComponent(s)}`);
                 const data = await response.json();
                 setContent(data.content);
             } catch (error) {

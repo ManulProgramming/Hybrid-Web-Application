@@ -1,6 +1,5 @@
 package com.example.manultube.mapper;
 
-import com.example.manultube.dto.Post.PostRequestDTO;
 import com.example.manultube.dto.Post.PostResponseDTO;
 import com.example.manultube.model.Post;
 

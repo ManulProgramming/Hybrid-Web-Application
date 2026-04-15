@@ -13,12 +13,19 @@ import com.example.manultube.model.*;
 import com.example.manultube.service.CookieService;
 import com.example.manultube.service.PostService;
 import com.example.manultube.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.apache.tika.Tika;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -68,7 +75,11 @@ public class PostController {
             return true;
         }
     }
-    @GetMapping({"/",""})
+    @Operation(summary = "Get posts", description = "Returns a page of all posts created")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Fetch all posts"),
+    })
+    @GetMapping()
     public ResponseEntity<TypicalResponse<Page<PostResponseDTO>>> getPosts(HttpServletRequest request, HttpServletResponse response, @RequestParam(value="p", required = false, defaultValue = "1") Integer page, @RequestParam(value="s", required = false, defaultValue = "16") Integer size, @RequestParam(value="q", required = false, defaultValue = "") String query, @RequestParam(value="f", required = false, defaultValue = "hot") String sort) {
         TypicalResponse<Page<PostResponseDTO>> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
@@ -91,7 +102,12 @@ public class PostController {
         res.setContent(posts);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
-    @GetMapping({"/{id}","/{id}/"})
+    @Operation(summary = "Get specific post", description = "Returns post data by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Fetch post successful"),
+            @ApiResponse(responseCode = "404", description = "Post not found"),
+    })
+    @GetMapping("/{id}")
     public ResponseEntity<TypicalResponse<PostResponseDTO>> getPostById(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id) {
         TypicalResponse<PostResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
@@ -118,7 +134,12 @@ public class PostController {
         }
         return ResponseEntity.status(res.getStatus()).body(res);
     }
-    @GetMapping({"/{id}/r","/{id}/r/"})
+    @Operation(summary = "Get user's rating for specific post", description = "Returns a current rating that user has for that specific post")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User's rating fetch successful"),
+            @ApiResponse(responseCode = "401", description = "User is not authenticated"),
+    })
+    @GetMapping("/{id}/r")
     public ResponseEntity<TypicalResponse<RatingResponseDTO>> getUserPostRating(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id){
         TypicalResponse<RatingResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
@@ -141,8 +162,14 @@ public class PostController {
         res.setStatus(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
-    @PostMapping({"/{id}/r","/{id}/r/"})
-    public ResponseEntity<TypicalResponse<RatingResponseDTO>> changeUserPostRating(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @RequestBody(required = true) RatingRequestDTO rating){
+    @Operation(summary = "Change user's rating for this post", description = "Receive boolean value for rating and change it or put")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User's rating changed successful"),
+            @ApiResponse(responseCode = "400", description = "Rating is required"),
+            @ApiResponse(responseCode = "401", description = "User is not authenticated")
+    })
+    @PostMapping("/{id}/r")
+    public ResponseEntity<TypicalResponse<RatingResponseDTO>> changeUserPostRating(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @Parameter(description = "Rating body data") @RequestBody(required = true) RatingRequestDTO rating){
         TypicalResponse<RatingResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
         String token = (String) cookieMap.get("token");
@@ -166,7 +193,11 @@ public class PostController {
         res.setStatus(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
-    @GetMapping({"/{id}/c","/{id}/c/"})
+    @Operation(summary = "Get comments for specific post", description = "Returns a page of comments for a specific post")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Fetch post comments")
+    })
+    @GetMapping("/{id}/c")
     public ResponseEntity<TypicalResponse<Page<CommentResponseDTO>>> getComments(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @RequestParam(value="p", required = false, defaultValue = "1") Integer page, @RequestParam(value="s", required = false, defaultValue = "16") Integer size) {
         TypicalResponse<Page<CommentResponseDTO>> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
@@ -188,8 +219,14 @@ public class PostController {
         res.setContent(posts);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
-    @PostMapping({"/{id}/c","/{id}/c/"})
-    public ResponseEntity<TypicalResponse<CommentResponseDTO>> createComments(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @Valid @RequestBody CommentRequestDTO comment) {
+    @Operation(summary = "Create a new comment for specific post", description = "Gets user's info and their comment to add for specific post")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Created comment successfully"),
+            @ApiResponse(responseCode = "400", description = "Bad request and body params"),
+            @ApiResponse(responseCode = "401", description = "User is not authenticated"),
+    })
+    @PostMapping("/{id}/c")
+    public ResponseEntity<TypicalResponse<CommentResponseDTO>> createComments(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") Long id, @Parameter(description = "Comment body data") @Valid @RequestBody CommentRequestDTO comment) {
         TypicalResponse<CommentResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
         String token = (String) cookieMap.get("token");
@@ -219,7 +256,12 @@ public class PostController {
         res.setStatus(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
-    @DeleteMapping({"/{postId}/c/{commentId}","/{postId}/c/{commentId}/"})
+    @Operation(summary = "Delete specific comment", description = "Remove comment by it's ID and the post ID where it is contained")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Comment removed successfully"),
+            @ApiResponse(responseCode = "401", description = "User is not authenticated")
+    })
+    @DeleteMapping( "/{postId}/c/{commentId}")
     public ResponseEntity<TypicalResponse<CommentResponseDTO>> deleteComment(@PathVariable("postId") Long postId, @PathVariable("commentId") Long commentId, HttpServletRequest request, HttpServletResponse response) {
         TypicalResponse<CommentResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
@@ -245,9 +287,14 @@ public class PostController {
         res.setStatus(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
-
-    @PostMapping({"/",""})
-    public ResponseEntity<TypicalResponse<PostResponseDTO>> createPost(@Valid @ModelAttribute PostRequestDTO post, @RequestParam(value = "file", required = true) MultipartFile file, HttpServletRequest request, HttpServletResponse response) {
+    @Operation(summary = "Create new post from form", description = "Creates a new post")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Post created successfully"),
+            @ApiResponse(responseCode = "400", description = "Bad form data. File is required"),
+            @ApiResponse(responseCode = "401", description = "User is not authenticated")
+    })
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<TypicalResponse<PostResponseDTO>> createPost(@Parameter(description = "Post form data") @Valid @ModelAttribute PostRequestDTO post, HttpServletRequest request, HttpServletResponse response) {
         TypicalResponse<PostResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
         String token = (String) cookieMap.get("token");
@@ -264,10 +311,10 @@ public class PostController {
                 res.setCurrentUser(userMap);
                 post.setUserId(user.getId());
                 post.setUsername(user.getUsername());
-                if (file!=null && !file.isEmpty() && file.getSize()<=1L*1000*1000*1000) {
+                if (post.getFile()!=null && !post.getFile().isEmpty() && post.getFile().getSize()<=1L*1000*1000*1000) {
                     try{
                         Path tempFile = Paths.get("/app/shared/upload-" + UUID.randomUUID() + ".bin");
-                        try (InputStream in = file.getInputStream()) {
+                        try (InputStream in = post.getFile().getInputStream()) {
                             Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
                         }
                         Boolean status = validateMimeVideo(tempFile);
@@ -297,12 +344,24 @@ public class PostController {
         res.setStatus(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
-    @PutMapping({"/{id}","/{id}/"})
-    public ResponseEntity<TypicalResponse<PostResponseDTO>> putPost(@PathVariable("id") Long id, @Valid @RequestBody PostUpdateDTO post, HttpServletRequest request, HttpServletResponse response) {
+    @Operation(summary = "Update whole post", description = "Put new post information for specific one")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Post updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Bad post form data"),
+            @ApiResponse(responseCode = "401", description = "User is not authenticated")
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<TypicalResponse<PostResponseDTO>> putPost(@PathVariable("id") Long id, @Parameter(description = "Post form data") @Valid @RequestBody PostUpdateDTO post, HttpServletRequest request, HttpServletResponse response) {
         return updatePost(id, post, request, response);
     }
-    @PatchMapping({"/{id}","/{id}/"})
-    public ResponseEntity<TypicalResponse<PostResponseDTO>> patchPost(@PathVariable("id") Long id, @Valid @RequestBody PostUpdateDTO post, HttpServletRequest request, HttpServletResponse response) {
+    @Operation(summary = "Update specific post info", description = "Patch post information for specific one")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Post updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Bad post form data"),
+            @ApiResponse(responseCode = "401", description = "User is not authenticated")
+    })
+    @PatchMapping("/{id}")
+    public ResponseEntity<TypicalResponse<PostResponseDTO>> patchPost(@PathVariable("id") Long id, @Parameter(description = "Post form data") @Valid @RequestBody PostUpdateDTO post, HttpServletRequest request, HttpServletResponse response) {
         return updatePost(id, post, request, response);
     }
 
@@ -333,7 +392,12 @@ public class PostController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
-    @DeleteMapping({"/{id}","/{id}/"})
+    @Operation(summary = "Delete specific post", description = "Remove post by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Post deleted successfully"),
+            @ApiResponse(responseCode = "401", description = "User is not authenticated")
+    })
+    @DeleteMapping("/{id}")
     public ResponseEntity<TypicalResponse<PostResponseDTO>> deletePost(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
         TypicalResponse<PostResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());

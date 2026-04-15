@@ -65,7 +65,7 @@ function Video() {
     useEffect(() => {
         async function fetchVideoRating() {
             try {
-                const response = await fetch(apiUrl + 'p/' + postId + '/r/');
+                const response = await fetch(apiUrl + 'p/' + postId + '/r');
                 const data = await response.json();
                 if (data.status.includes('200') && data.content) {
                     setRatingData(data.content);
@@ -218,7 +218,7 @@ function Video() {
     const changeRating = async (rating) => {
         if (currentUserId !== 0) {
             try {
-                const res = await fetch(apiUrl + 'p/' + postId + '/r/', {
+                const res = await fetch(apiUrl + 'p/' + postId + '/r', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

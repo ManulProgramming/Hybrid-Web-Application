@@ -11,7 +11,7 @@ function VideoCommentNew() {
             setError(true);
         }else {
             try {
-                const res = await fetch(apiUrl + 'p/' + postId + '/c/', {
+                const res = await fetch(apiUrl + 'p/' + postId + '/c', {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

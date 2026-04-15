@@ -10,12 +10,20 @@ import com.example.manultube.service.CookieService;
 import com.example.manultube.service.PostService;
 import com.example.manultube.service.SessionService;
 import com.example.manultube.service.UserService;
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.apache.tika.Tika;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -62,13 +70,18 @@ public class UserController {
         }
         return true;
     }
-    @GetMapping({"/",""})
+    @Hidden
+    @GetMapping()
     public ResponseEntity<Void> get() {
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create("/api/p/"))
                 .build();
     }
-    @GetMapping({"/{id}","/{id}/"})
+    @Operation(summary = "Get specific user info", description = "Returns data for a user by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Fetch user data"),
+    })
+    @GetMapping("/{id}")
     public ResponseEntity<TypicalResponse<UserResponseDTO>> getUserById(HttpServletRequest request, HttpServletResponse response, @PathVariable Long id) {
         logger.info("GET /api/u/{} called", id);
         TypicalResponse<UserResponseDTO> res = new TypicalResponse<>();
@@ -101,7 +114,11 @@ public class UserController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
-    @GetMapping({"/{id}/p","/{id}/p/"})
+    @Operation(summary = "Get posts by user ID", description = "Returns page of posts created by specific user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Fetch post data"),
+    })
+    @GetMapping("/{id}/p")
     public ResponseEntity<TypicalResponse<Page<PostResponseDTO>>> getUserPosts(HttpServletRequest request, HttpServletResponse response, @PathVariable Long id, @RequestParam(value="p", required = false, defaultValue = "1") Integer page, @RequestParam(value="s", required = false, defaultValue = "16") Integer size, @RequestParam(value="f", required = false, defaultValue = "hot") String sort) {
         logger.info("GET /api/u/{}/p called", id);
         TypicalResponse<Page<PostResponseDTO>> res = new TypicalResponse<>();
@@ -126,18 +143,35 @@ public class UserController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
-    @PutMapping({"/{id}","/{id}/"})
-    public ResponseEntity<TypicalResponse<UserResponseDTO>> putUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
+    @Operation(summary = "Update whole user data", description = "Put new information for specific user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Updated user successfully"),
+            @ApiResponse(responseCode = "400", description = "Current user password (oldUserpass) is required"),
+            @ApiResponse(responseCode = "401", description = "User is not authenticated")
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<TypicalResponse<UserResponseDTO>> putUser(@PathVariable Long id, @Parameter(description = "User body data") @Valid @RequestBody UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
         logger.info("PUT /api/u/{} called", id);
         return updateUser(id, user, request, response);
     }
-    @PatchMapping({"/{id}","/{id}/"})
-    public ResponseEntity<TypicalResponse<UserResponseDTO>> patchUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
+    @Operation(summary = "Update specific user data", description = "Patch information for specific user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Updated user successfully"),
+            @ApiResponse(responseCode = "400", description = "Current user password (oldUserpass) is required"),
+            @ApiResponse(responseCode = "401", description = "User is not authenticated")
+    })
+    @PatchMapping("/{id}")
+    public ResponseEntity<TypicalResponse<UserResponseDTO>> patchUser(@PathVariable Long id, @Parameter(description = "User body data") @Valid @RequestBody UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
         logger.info("PATCH /api/u/{} called", id);
         return updateUser(id, user, request, response);
     }
-    @PatchMapping({"/{id}/a","/{id}/a/"})
-    public ResponseEntity<TypicalResponse<UserResponseDTO>> patchUserAvatar(@PathVariable Long id, @RequestParam(value = "file", required = true) MultipartFile file, HttpServletRequest request, HttpServletResponse response) {
+    @Operation(summary = "Update user avatar", description = "Replace current profile picture with a new one")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Updated user successfully"),
+            @ApiResponse(responseCode = "401", description = "User is not authenticated")
+    })
+    @PatchMapping(value="/{id}/a", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<TypicalResponse<UserResponseDTO>> patchUserAvatar(@PathVariable Long id, @Parameter(description = "Profile picture file") @RequestPart(value = "file", required = true) MultipartFile file, HttpServletRequest request, HttpServletResponse response) {
         logger.info("PATCH /api/u/{}/a called", id);
         TypicalResponse<UserResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
@@ -215,8 +249,14 @@ public class UserController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
-    @DeleteMapping({"/{id}","/{id}/"})
-    public ResponseEntity<TypicalResponse<UserResponseDTO>> deleteUser(@PathVariable Long id, @RequestBody @Valid UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
+    @Operation(summary = "Delete user", description = "Remove user account and all the posts/comments/ratings associated with it")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Deleted user successfully"),
+            @ApiResponse(responseCode = "400", description = "Current user password (oldUserpass) is required"),
+            @ApiResponse(responseCode = "401", description = "User is not authenticated")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<TypicalResponse<UserResponseDTO>> deleteUser(@PathVariable Long id, @Parameter(description = "User body data (oldUserpass is required)") @RequestBody @Valid UserUpdateDTO user, HttpServletRequest request, HttpServletResponse response) {
         logger.info("DELETE /api/u/{} called", id);
         TypicalResponse<UserResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());

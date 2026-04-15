@@ -29,7 +29,7 @@ function Verify(){
         let usermail = document.getElementById("usermail");
         if (!(usermail) && username && username.value && /^([a-zA-Z0-9._-]{1,50}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/.test(username.value)){
             try {
-                const res = await fetch(apiUrl+'code/', {
+                const res = await fetch(apiUrl+'code', {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -50,7 +50,7 @@ function Verify(){
             }
         }else if (usermail && usermail.value && /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(usermail.value)){
             try {
-                const res = await fetch(apiUrl+'code/', {
+                const res = await fetch(apiUrl+'code', {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

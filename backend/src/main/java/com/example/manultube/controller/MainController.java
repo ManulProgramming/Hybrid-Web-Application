@@ -20,7 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
@@ -225,7 +224,7 @@ public class MainController {
         return "register.html";
     }
     @PostMapping({"/register","/register/"})
-    public String registerUser(HttpServletRequest request, HttpServletResponse response, RedirectAttributes redirectAttributes, @Valid @ModelAttribute UserRegisterDTO user, @RequestParam(value = "file", required = false) MultipartFile file) {
+    public String registerUser(HttpServletRequest request, HttpServletResponse response, RedirectAttributes redirectAttributes, @Valid @ModelAttribute UserRegisterDTO user) {
         TypicalResponse<UserResponseDTO> res = new TypicalResponse<>();
 
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
@@ -236,22 +235,22 @@ public class MainController {
             theme="dark";
             response.addCookie(cookieService.createThemeCookie("dark"));
         }
-        UserResponseDTO createdUser;
-        createdUser = userService.createUser(user);
-        if (createdUser == null) {
-            res.setStatus(HttpStatus.BAD_REQUEST);
-        }else {
-            if (verificationService.verifyCode(createdUser.getUsermail(), user.getCode())) {
+        UserResponseDTO createdUser = new UserResponseDTO();
+        if (verificationService.verifyCode(user.getUsermail(), user.getCode())) {
+            createdUser = userService.createUser(user);
+            if (createdUser == null) {
+                res.setStatus(HttpStatus.BAD_REQUEST);
+            }else {
                 res.setStatus(HttpStatus.OK);
                 res.setContent(createdUser);
                 Map<String, Object> userMap = new HashMap<>();
                 userMap.put("id", createdUser.getId());
                 userMap.put("name", createdUser.getUsername());
                 res.setCurrentUser(userMap);
-                if (file != null && !file.isEmpty() && file.getSize() <= 5L * 1000 * 1000) {
+                if (user.getFile() != null && !user.getFile().isEmpty() && user.getFile().getSize() <= 5L * 1000 * 1000) {
                     try {
                         Path tempFile = Paths.get("/app/shared/upload-" + UUID.randomUUID() + ".bin");
-                        try (InputStream in = file.getInputStream()) {
+                        try (InputStream in = user.getFile().getInputStream()) {
                             Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
                         }
                         Boolean status = validateMimeImage(tempFile);
@@ -266,7 +265,10 @@ public class MainController {
         }
         res.setParams(Map.of("theme", theme));
         if (res.getStatus() == HttpStatus.OK) {
-            return "redirect:/u/"+createdUser.getId();
+            if (createdUser!=null) {
+                return "redirect:/u/" + createdUser.getId();
+            }
+            return "redirect:/";
         }else{
             redirectAttributes.addFlashAttribute("res", res);
             return "redirect:/register";
@@ -332,7 +334,7 @@ public class MainController {
         }
     }
     @PostMapping({"/p","/p/"})
-    public String createPost(Model model, HttpServletRequest request, HttpServletResponse response, RedirectAttributes redirectAttributes, @Valid @ModelAttribute PostRequestDTO post, @RequestParam(value = "file", required = true) MultipartFile file){
+    public String createPost(Model model, HttpServletRequest request, HttpServletResponse response, RedirectAttributes redirectAttributes, @Valid @ModelAttribute PostRequestDTO post){
         TypicalResponse<PostResponseDTO> res = new TypicalResponse<>();
         Map<String, Object> cookieMap = cookieService.getCookie(request.getCookies());
         String token = (String) cookieMap.get("token");
@@ -351,10 +353,10 @@ public class MainController {
                 res.setCurrentUser(userMap);
                 post.setUserId(user.getId());
                 post.setUsername(user.getUsername());
-                if (file!=null && !file.isEmpty() && file.getSize()<=1L*1000*1000*1000) {
+                if (post.getFile()!=null && !post.getFile().isEmpty() && post.getFile().getSize()<=1L*1000*1000*1000) {
                     try{
                         Path tempFile = Paths.get("/app/shared/upload-" + UUID.randomUUID() + ".bin");
-                        try (InputStream in = file.getInputStream()) {
+                        try (InputStream in = post.getFile().getInputStream()) {
                             Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
                         }
                         Boolean status = validateMimeVideo(tempFile);

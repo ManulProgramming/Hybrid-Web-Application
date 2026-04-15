@@ -26,7 +26,7 @@ function ProfileVideo() {
     useEffect(() => {
         async function fetchUserPosts() {
             try {
-                const response = await fetch(apiUrl + 'u/' + userId+`/p/?p=${encodeURIComponent(p)}&s=${encodeURIComponent(s)}&f=${encodeURIComponent(f)}`);
+                const response = await fetch(apiUrl + 'u/' + userId+`/p?p=${encodeURIComponent(p)}&s=${encodeURIComponent(s)}&f=${encodeURIComponent(f)}`);
                 const data = await response.json();
                 setContent(data.content);
             } catch (error) {

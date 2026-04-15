@@ -157,7 +157,7 @@ function Profile() {
 
     async function logoutUser(){
         try {
-            const response = await fetch(apiUrl + 'logout/', {
+            const response = await fetch(apiUrl + 'logout', {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -259,7 +259,7 @@ function Profile() {
             onclick: (e) => {setModal(prev => ({...prev, ["status"]: false}))}
         });
         try {
-            await fetch(apiUrl+'u/'+userId+'/a/', {
+            await fetch(apiUrl+'u/'+userId+'/a', {
                 method: "PATCH",
                 body: tempData
             });
